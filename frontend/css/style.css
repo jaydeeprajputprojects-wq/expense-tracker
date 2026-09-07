@@ -1,0 +1,16 @@
+/*
+
+* Application-specific styles.
+*
+* Tailwind CSS is used for most UI styling.
+* This file contains only custom styles that
+* are specific to the application.
+  */
+
+body {
+min-height: 100vh;
+}
+
+button {
+cursor: pointer;
+}
