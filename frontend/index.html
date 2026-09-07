@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Personal Finance Tracker</title>
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<!-- Application CSS -->
+<link rel="stylesheet" href="./css/style.css">
+
+</head>
+
+<body class="bg-gray-100 text-gray-900">
+
+<header class="bg-white border-b">
+    <div class="max-w-7xl mx-auto px-6 py-4">
+        <h1 class="text-2xl font-bold">
+            Personal Finance Tracker
+        </h1>
+
+        <p class="text-sm text-gray-500">
+            Track your money flow in one place
+        </p>
+    </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- Summary -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center gap-3">
+                <i data-lucide="wallet"></i>
+
+                <div>
+                    <p class="text-sm text-gray-500">
+                        Balance
+                    </p>
+
+                    <p class="text-2xl font-bold">
+                        ₹0.00
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center gap-3">
+                <i data-lucide="arrow-down-circle"></i>
+
+                <div>
+                    <p class="text-sm text-gray-500">
+                        Income
+                    </p>
+
+                    <p class="text-2xl font-bold">
+                        ₹0.00
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center gap-3">
+                <i data-lucide="arrow-up-circle"></i>
+
+                <div>
+                    <p class="text-sm text-gray-500">
+                        Expenses
+                    </p>
+
+                    <p class="text-2xl font-bold">
+                        ₹0.00
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- Application Area -->
+    <section class="bg-white rounded-lg shadow-sm p-6">
+
+        <div class="flex items-center gap-3 mb-4">
+            <i data-lucide="layout-dashboard"></i>
+
+            <h2 class="text-xl font-semibold">
+                Finance Dashboard
+            </h2>
+        </div>
+
+        <p class="text-gray-600">
+            Your finance tracking dashboard will be available here.
+        </p>
+
+    </section>
+
+</main>
+
+<!-- Application JavaScript -->
+<script type="module" src="./js/app.js"></script>
+```
+
+</body>
+</html>
