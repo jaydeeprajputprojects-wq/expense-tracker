@@ -442,7 +442,7 @@ The `Configuration` sheet stores application-level configuration.
 |---|---|---|
 | A | Config_Key | Configuration key |
 | B | Config_Value | Configuration value |
-| C | Description | Configuration description |
+| C | Description | Configuration description | 
 
 Example:
 
