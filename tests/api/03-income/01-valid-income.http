@@ -1,0 +1,24 @@
+### Valid income
+POST https://script.google.com/macros/s/AKfycbx2fZsDgM3RCFVkSQhM1ai4kr4kyc7AbTfWUP1QWdwZhQwmhdqX_ZG03WDQhsIm5IyC/exec
+Content-Type: application/json
+
+{
+  "action": "CREATE_TRANSACTION",
+  "data": {
+    "transactionType": "INCOME",
+    "transactionDate": "21-09-2026",
+    "amount": 2500,
+    "categoryId": "CAT001",
+    "receivedIntoAccountId": "ACC001",
+    "notes": "Salary"
+  }
+}
+
+### Expected output
+{
+  "success": true,
+  "message": "Transaction created successfully",
+  "data": {
+    "transactionId": "TXN-<generated>"
+  }
+}

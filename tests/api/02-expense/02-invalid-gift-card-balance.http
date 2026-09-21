@@ -1,0 +1,25 @@
+### Invalid gift card expense (insufficient balance)
+POST https://script.google.com/macros/s/AKfycbx2fZsDgM3RCFVkSQhM1ai4kr4kyc7AbTfWUP1QWdwZhQwmhdqX_ZG03WDQhsIm5IyC/exec
+Content-Type: application/json
+
+{
+  "action": "CREATE_TRANSACTION",
+  "data": {
+    "transactionType": "EXPENSE",
+    "transactionDate": "21-09-2026",
+    "amount": 5000,
+    "categoryId": "CAT001",
+    "paymentMethod": "GIFT_CARD",
+    "paidFromAccountId": "ACC004",
+    "notes": "Gift card insufficient balance"
+  }
+}
+
+### Expected output
+{
+  "success": false,
+  "error": {
+    "code": "INSUFFICIENT_GIFT_CARD_BALANCE",
+    "message": "Gift card balance is insufficient for this transaction."
+  }
+}

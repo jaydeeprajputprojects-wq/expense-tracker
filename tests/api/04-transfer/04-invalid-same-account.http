@@ -1,0 +1,24 @@
+### Invalid same-account transfer
+POST https://script.google.com/macros/s/AKfycbx2fZsDgM3RCFVkSQhM1ai4kr4kyc7AbTfWUP1QWdwZhQwmhdqX_ZG03WDQhsIm5IyC/exec
+Content-Type: application/json
+
+{
+  "action": "CREATE_TRANSACTION",
+  "data": {
+    "transactionType": "TRANSFER",
+    "transactionDate": "21-09-2026",
+    "amount": 100,
+    "fromAccountId": "ACC001",
+    "toAccountId": "ACC001",
+    "notes": "same account"
+  }
+}
+
+### Expected output
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_TRANSFER_ACCOUNT",
+    "message": "From and To accounts must be different."
+  }
+}
