@@ -9,27 +9,263 @@ const ValidationService = {
       };
     }
 
-    if (data.amount === undefined || data.amount === null || data.amount === '') {
+    if (
+      data.transactionType === undefined ||
+      data.transactionType === null ||
+      data.transactionType === ''
+    ) {
       return {
         valid: false,
-        code: 'TRANSACTION_AMOUNT_REQUIRED',
-        message: 'Transaction amount is required.'
+        code: 'TRANSACTION_TYPE_REQUIRED',
+        message: 'Transaction type is required.'
       };
     }
 
-    return validateTransactionAmount(data.amount);
+    var normalizedType = String(data.transactionType).trim().toUpperCase();
+
+    if (
+      normalizedType !== TRANSACTION_TYPES.EXPENSE &&
+      normalizedType !== TRANSACTION_TYPES.INCOME &&
+      normalizedType !== TRANSACTION_TYPES.TRANSFER
+    ) {
+      return {
+        valid: false,
+        code: 'INVALID_TRANSACTION_TYPE',
+        message: 'Transaction type is invalid.'
+      };
+    }
+
+    if (normalizedType === TRANSACTION_TYPES.EXPENSE) {
+      return this.validateExpense(data);
+    }
+
+    if (normalizedType === TRANSACTION_TYPES.INCOME) {
+      return this.validateIncome(data);
+    }
+
+    return this.validateTransfer(data);
   },
 
   validateExpense: function(data) {
-    // To be implemented
+    if (!data || typeof data !== 'object') {
+      return {
+        valid: false,
+        code: 'INVALID_REQUEST',
+        message: 'Transaction request is required.'
+      };
+    }
+
+    var dateValidation = validateTransactionDate(data.transactionDate);
+    if (!dateValidation.valid) {
+      return dateValidation;
+    }
+
+    var amountValidation = validateTransactionAmount(data.amount);
+    if (!amountValidation.valid) {
+      return amountValidation;
+    }
+
+    var categoryValidation = this.validateCategory(data.categoryId);
+    if (!categoryValidation.valid) {
+      return categoryValidation;
+    }
+
+    if (
+      data.paymentMethod === undefined ||
+      data.paymentMethod === null ||
+      data.paymentMethod === ''
+    ) {
+      return {
+        valid: false,
+        code: 'INVALID_PAYMENT_METHOD',
+        message: 'Payment method is required.'
+      };
+    }
+
+    if (
+      data.paidFromAccountId === undefined ||
+      data.paidFromAccountId === null ||
+      data.paidFromAccountId === ''
+    ) {
+      return {
+        valid: false,
+        code: 'INVALID_PAID_FROM_ACCOUNT',
+        message: 'Paid from account is required.'
+      };
+    }
+
+    var paymentMethod = String(data.paymentMethod).trim().toUpperCase();
+    var expectedAccountType = null;
+
+    if (paymentMethod === PAYMENT_METHODS.BANK) {
+      expectedAccountType = ACCOUNT_TYPES.BANK;
+    } else if (paymentMethod === PAYMENT_METHODS.CREDIT_CARD) {
+      expectedAccountType = ACCOUNT_TYPES.CREDIT_CARD;
+    } else if (paymentMethod === PAYMENT_METHODS.GIFT_CARD) {
+      expectedAccountType = ACCOUNT_TYPES.GIFT_CARD;
+    }
+
+    if (!expectedAccountType) {
+      return {
+        valid: false,
+        code: 'INVALID_PAYMENT_METHOD',
+        message: 'Payment method is invalid.'
+      };
+    }
+
+    var accountValidation = this.validateAccount(data.paidFromAccountId, expectedAccountType);
+    if (!accountValidation.valid) {
+      if (accountValidation.code === 'ACCOUNT_NOT_FOUND') {
+        return accountValidation;
+      }
+
+      return {
+        valid: false,
+        code: 'INVALID_PAYMENT_METHOD_ACCOUNT',
+        message: 'Paid from account must match the selected payment method.'
+      };
+    }
+
+    return {
+      valid: true,
+      value: {
+        transactionType: TRANSACTION_TYPES.EXPENSE,
+        transactionDate: dateValidation.value,
+        amount: amountValidation.value,
+        categoryId: categoryValidation.value.Category_ID,
+        paymentMethod: paymentMethod,
+        paidFromAccountId: data.paidFromAccountId,
+        notes: data.notes || ''
+      }
+    };
   },
 
   validateIncome: function(data) {
-    // To be implemented
+    if (!data || typeof data !== 'object') {
+      return {
+        valid: false,
+        code: 'INVALID_REQUEST',
+        message: 'Transaction request is required.'
+      };
+    }
+
+    var dateValidation = validateTransactionDate(data.transactionDate);
+    if (!dateValidation.valid) {
+      return dateValidation;
+    }
+
+    var amountValidation = validateTransactionAmount(data.amount);
+    if (!amountValidation.valid) {
+      return amountValidation;
+    }
+
+    var categoryValidation = this.validateCategory(data.categoryId);
+    if (!categoryValidation.valid) {
+      return categoryValidation;
+    }
+
+    if (
+      data.receivedIntoAccountId === undefined ||
+      data.receivedIntoAccountId === null ||
+      data.receivedIntoAccountId === ''
+    ) {
+      return {
+        valid: false,
+        code: 'INVALID_RECEIVING_ACCOUNT',
+        message: 'Receiving account is required.'
+      };
+    }
+
+    var accountValidation = this.validateAccount(data.receivedIntoAccountId);
+    if (!accountValidation.valid) {
+      return accountValidation;
+    }
+
+    return {
+      valid: true,
+      value: {
+        transactionType: TRANSACTION_TYPES.INCOME,
+        transactionDate: dateValidation.value,
+        amount: amountValidation.value,
+        categoryId: categoryValidation.value.Category_ID,
+        receivedIntoAccountId: data.receivedIntoAccountId,
+        notes: data.notes || ''
+      }
+    };
   },
 
   validateTransfer: function(data) {
-    // To be implemented
+    if (!data || typeof data !== 'object') {
+      return {
+        valid: false,
+        code: 'INVALID_REQUEST',
+        message: 'Transaction request is required.'
+      };
+    }
+
+    var dateValidation = validateTransactionDate(data.transactionDate);
+    if (!dateValidation.valid) {
+      return dateValidation;
+    }
+
+    var amountValidation = validateTransactionAmount(data.amount);
+    if (!amountValidation.valid) {
+      return amountValidation;
+    }
+
+    if (
+      data.fromAccountId === undefined ||
+      data.fromAccountId === null ||
+      data.fromAccountId === ''
+    ) {
+      return {
+        valid: false,
+        code: 'INVALID_FROM_ACCOUNT',
+        message: 'From account is required.'
+      };
+    }
+
+    if (
+      data.toAccountId === undefined ||
+      data.toAccountId === null ||
+      data.toAccountId === ''
+    ) {
+      return {
+        valid: false,
+        code: 'INVALID_TO_ACCOUNT',
+        message: 'To account is required.'
+      };
+    }
+
+    var fromAccountValidation = this.validateAccount(data.fromAccountId);
+    if (!fromAccountValidation.valid) {
+      return fromAccountValidation;
+    }
+
+    var toAccountValidation = this.validateAccount(data.toAccountId);
+    if (!toAccountValidation.valid) {
+      return toAccountValidation;
+    }
+
+    if (String(data.fromAccountId).trim() === String(data.toAccountId).trim()) {
+      return {
+        valid: false,
+        code: 'INVALID_TRANSFER_ACCOUNT',
+        message: 'From and To accounts must be different.'
+      };
+    }
+
+    return {
+      valid: true,
+      value: {
+        transactionType: TRANSACTION_TYPES.TRANSFER,
+        transactionDate: dateValidation.value,
+        amount: amountValidation.value,
+        fromAccountId: data.fromAccountId,
+        toAccountId: data.toAccountId,
+        notes: data.notes || ''
+      }
+    };
   },
 
   validateAccount: function(accountId, expectedType) {
@@ -366,9 +602,48 @@ function testValidateAccountTypeMismatch() {
   }
 }
 
+function getTestAccountId_(expectedType) {
+  var accounts = getAccounts();
+
+  if (!accounts || accounts.length === 0) {
+    throw new Error('No accounts found in the master data for validation tests.');
+  }
+
+  var candidate = accounts.find(function(account) {
+    return !expectedType || account.accountType === expectedType;
+  });
+
+  if (!candidate) {
+    throw new Error('No matching account found in master data for test validation.');
+  }
+
+  return candidate.accountId;
+}
+
+function getTransferTestAccountPair_() {
+  var accounts = getAccounts();
+
+  if (!accounts || accounts.length < 2) {
+    throw new Error('At least 2 accounts are required for transfer validation tests.');
+  }
+
+  var fromAccount = accounts[0];
+  var toAccount = accounts[1];
+
+  if (!fromAccount || !toAccount) {
+    throw new Error('Valid transfer account pair was not found in the master data.');
+  }
+
+  return {
+    fromAccountId: fromAccount.accountId,
+    toAccountId: toAccount.accountId
+  };
+}
+
 function testValidateAccountValid() {
-  var result = ValidationService.validateAccount('ACC001', 'BANK');
-  if (result.valid !== true || result.value.accountId !== 'ACC001') {
+  var accountId = getTestAccountId_('BANK');
+  var result = ValidationService.validateAccount(accountId, 'BANK');
+  if (result.valid !== true || result.value.accountId !== accountId) {
     throw new Error('Valid account validation failed');
   }
 }
@@ -391,6 +666,115 @@ function testValidateCategoryValid() {
   var result = ValidationService.validateCategory('CAT001');
   if (result.valid !== true || result.value.Category_ID !== 'CAT001') {
     throw new Error('Valid category validation failed');
+  }
+}
+
+function testValidateExpenseMissingDate() {
+  var result = ValidationService.validateExpense({
+    amount: '100',
+    categoryId: 'CAT001',
+    paymentMethod: 'BANK',
+    paidFromAccountId: 'ACC001'
+  });
+
+  if (result.valid !== false || result.code !== 'TRANSACTION_DATE_REQUIRED') {
+    throw new Error('Expense date validation failed');
+  }
+}
+
+function testValidateExpenseMissingCategory() {
+  var result = ValidationService.validateExpense({
+    transactionDate: '21-09-2026',
+    amount: '100',
+    paymentMethod: 'BANK',
+    paidFromAccountId: 'ACC001'
+  });
+
+  if (result.valid !== false || result.code !== 'INVALID_CATEGORY_ID') {
+    throw new Error('Expense category validation failed');
+  }
+}
+
+function testValidateExpensePaymentMethodMismatch() {
+  var result = ValidationService.validateExpense({
+    transactionDate: '21-09-2026',
+    amount: '100',
+    categoryId: 'CAT001',
+    paymentMethod: 'CREDIT_CARD',
+    paidFromAccountId: 'ACC001'
+  });
+
+  if (result.valid !== false || result.code !== 'INVALID_PAYMENT_METHOD_ACCOUNT') {
+    throw new Error('Expense payment method/account mismatch validation failed');
+  }
+}
+
+function testValidateExpenseValid() {
+  var accountId = getTestAccountId_('BANK');
+  var result = ValidationService.validateExpense({
+    transactionDate: '21-09-2026',
+    amount: '100',
+    categoryId: 'CAT001',
+    paymentMethod: 'BANK',
+    paidFromAccountId: accountId
+  });
+
+  if (result.valid !== true || result.value.amount !== 100) {
+    throw new Error('Valid expense validation failed');
+  }
+}
+
+function testValidateIncomeMissingReceivingAccount() {
+  var result = ValidationService.validateIncome({
+    transactionDate: '21-09-2026',
+    amount: '100',
+    categoryId: 'CAT001'
+  });
+
+  if (result.valid !== false || result.code !== 'INVALID_RECEIVING_ACCOUNT') {
+    throw new Error('Income receiving account validation failed');
+  }
+}
+
+function testValidateIncomeValid() {
+  var accountId = getTestAccountId_();
+  var result = ValidationService.validateIncome({
+    transactionDate: '21-09-2026',
+    amount: '100',
+    categoryId: 'CAT001',
+    receivedIntoAccountId: accountId
+  });
+
+  if (result.valid !== true || result.value.amount !== 100) {
+    throw new Error('Valid income validation failed');
+  }
+}
+
+function testValidateTransferSameAccount() {
+  var accountId = getTestAccountId_();
+  var result = ValidationService.validateTransfer({
+    transactionDate: '21-09-2026',
+    amount: '100',
+    fromAccountId: accountId,
+    toAccountId: accountId
+  });
+
+  if (result.valid !== false || result.code !== 'INVALID_TRANSFER_ACCOUNT') {
+    throw new Error('Transfer same-account validation failed');
+  }
+}
+
+function testValidateTransferValid() {
+  var transferAccounts = getTransferTestAccountPair_();
+  var result = ValidationService.validateTransfer({
+    transactionDate: '21-09-2026',
+    amount: '100',
+    fromAccountId: transferAccounts.fromAccountId,
+    toAccountId: transferAccounts.toAccountId
+  });
+
+  if (result.valid !== true || result.value.amount !== 100) {
+    throw new Error('Valid transfer validation failed');
   }
 }
 
@@ -453,3 +837,156 @@ function runAllAccountAndCategoryValidationTests() {
     throw new Error('US-015/US-016 validation tests failed');
   }
 }
+
+function runAllTransactionTypeValidationTests() {
+  var tests = [
+    testValidateExpenseMissingDate,
+    testValidateExpenseMissingCategory,
+    testValidateExpensePaymentMethodMismatch,
+    testValidateExpenseValid,
+    testValidateIncomeMissingReceivingAccount,
+    testValidateIncomeValid,
+    testValidateTransferSameAccount,
+    testValidateTransferValid
+  ];
+
+  var passed = 0;
+  var failed = 0;
+
+  tests.forEach(function(testFn) {
+    try {
+      testFn();
+      passed++;
+    } catch (error) {
+      failed++;
+      Logger.log('FAILED: ' + testFn.name + ' | ' + error.message);
+    }
+  });
+
+  Logger.log('Transaction type validation tests passed: ' + passed + '/' + tests.length);
+
+  if (failed > 0) {
+    throw new Error('US-017/US-018/US-019 validation tests failed');
+  }
+}
+
+function runFeature32Validation() {
+  runAllTransactionTypeValidationTests();
+}
+
+function testFeature32SampleData() {
+  var accounts = getAccounts();
+
+  if (!accounts || accounts.length < 2) {
+    throw new Error('At least 2 accounts are required for Feature 3.2 sample validation.');
+  }
+
+  var sourceAccount = accounts[0];
+  var destinationAccount = accounts[1];
+
+  if (!sourceAccount || !destinationAccount) {
+    throw new Error('Valid account IDs were not found in the sheet data.');
+  }
+
+  var samples = [
+    {
+      name: 'valid expense',
+      data: {
+        transactionType: 'EXPENSE',
+        transactionDate: '21-09-2026',
+        amount: '100',
+        categoryId: 'CAT001',
+        paymentMethod: 'BANK',
+        paidFromAccountId: sourceAccount.accountId
+      },
+      expectedValid: true,
+      expectedCode: null
+    },
+    {
+      name: 'invalid expense payment method mismatch',
+      data: {
+        transactionType: 'EXPENSE',
+        transactionDate: '21-09-2026',
+        amount: '100',
+        categoryId: 'CAT001',
+        paymentMethod: 'CREDIT_CARD',
+        paidFromAccountId: sourceAccount.accountId
+      },
+      expectedValid: false,
+      expectedCode: 'INVALID_PAYMENT_METHOD_ACCOUNT'
+    },
+    {
+      name: 'valid income',
+      data: {
+        transactionType: 'INCOME',
+        transactionDate: '21-09-2026',
+        amount: '100',
+        categoryId: 'CAT001',
+        receivedIntoAccountId: sourceAccount.accountId
+      },
+      expectedValid: true,
+      expectedCode: null
+    },
+    {
+      name: 'invalid income missing receiving account',
+      data: {
+        transactionType: 'INCOME',
+        transactionDate: '21-09-2026',
+        amount: '100',
+        categoryId: 'CAT001'
+      },
+      expectedValid: false,
+      expectedCode: 'INVALID_RECEIVING_ACCOUNT'
+    },
+    {
+      name: 'valid transfer',
+      data: {
+        transactionType: 'TRANSFER',
+        transactionDate: '21-09-2026',
+        amount: '100',
+        fromAccountId: sourceAccount.accountId,
+        toAccountId: destinationAccount.accountId
+      },
+      expectedValid: true,
+      expectedCode: null
+    },
+    {
+      name: 'invalid transfer same account',
+      data: {
+        transactionType: 'TRANSFER',
+        transactionDate: '21-09-2026',
+        amount: '100',
+        fromAccountId: sourceAccount.accountId,
+        toAccountId: sourceAccount.accountId
+      },
+      expectedValid: false,
+      expectedCode: 'INVALID_TRANSFER_ACCOUNT'
+    }
+  ];
+
+  var allPassed = true;
+
+  samples.forEach(function(sample) {
+    var result = ValidationService.validateTransaction(sample.data);
+    Logger.log(sample.name + ': ' + JSON.stringify(result));
+
+    if (result.valid !== sample.expectedValid) {
+      allPassed = false;
+      Logger.log('FAILED: ' + sample.name + ' expected valid=' + sample.expectedValid + ' but got ' + result.valid);
+      return;
+    }
+
+    if (sample.expectedCode && result.code !== sample.expectedCode) {
+      allPassed = false;
+      Logger.log('FAILED: ' + sample.name + ' expected code=' + sample.expectedCode + ' but got ' + result.code);
+    }
+  });
+
+  if (!allPassed) {
+    throw new Error('Feature 3.2 sample validation failed');
+  }
+
+  Logger.log('Feature 3.2 sample validation tests passed');
+}
+
+
