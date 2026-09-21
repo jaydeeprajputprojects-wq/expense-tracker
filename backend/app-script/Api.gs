@@ -272,9 +272,13 @@ const Api = {
    */
   handleGetBalances: function() {
 
-    return ResponseUtil.error(
-      'NOT_IMPLEMENTED',
-      'GET_BALANCES is not implemented yet'
+    const balances = BalanceService.getBalances();
+
+    return ResponseUtil.success(
+      {
+        balances: balances
+      },
+      'Balances fetched successfully'
     );
   },
 
@@ -377,6 +381,9 @@ function doGet(e) {
       case "GET_MASTER_DATA":
         return handleGetMasterData_();
 
+      case "GET_BALANCES":
+        return handleGetBalances_();
+
       default:
         return createJsonResponse_({
           success: false,
@@ -441,5 +448,18 @@ function handleGetMasterData_() {
       configuration: configuration
     },
     message: "Master data fetched successfully"
+  });
+}
+
+function handleGetBalances_() {
+  const balances = BalanceService.getBalances();
+
+  return createJsonResponse_({
+    success: true,
+    action: "GET_BALANCES",
+    data: {
+      balances: balances
+    },
+    message: "Balances fetched successfully"
   });
 }
