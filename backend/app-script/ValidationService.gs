@@ -126,6 +126,19 @@ const ValidationService = {
       };
     }
 
+    if (paymentMethod === PAYMENT_METHODS.GIFT_CARD) {
+      var giftCardBalance = Number(accountValidation.value.openingBalance || 0);
+      var requestedAmount = Number(amountValidation.value);
+
+      if (giftCardBalance < requestedAmount) {
+        return {
+          valid: false,
+          code: 'INSUFFICIENT_GIFT_CARD_BALANCE',
+          message: 'Gift card balance is insufficient for this transaction.'
+        };
+      }
+    }
+
     return {
       valid: true,
       value: {
@@ -213,11 +226,12 @@ const ValidationService = {
       return amountValidation;
     }
 
-    if (
-      data.fromAccountId === undefined ||
-      data.fromAccountId === null ||
-      data.fromAccountId === ''
-    ) {
+    var fromRawValue = data.fromAccountId;
+    var toRawValue = data.toAccountId;
+    var fromAccountId = String(fromRawValue === undefined || fromRawValue === null ? '' : fromRawValue).trim();
+    var toAccountId = String(toRawValue === undefined || toRawValue === null ? '' : toRawValue).trim();
+
+    if (fromAccountId === '') {
       return {
         valid: false,
         code: 'INVALID_FROM_ACCOUNT',
@@ -225,11 +239,7 @@ const ValidationService = {
       };
     }
 
-    if (
-      data.toAccountId === undefined ||
-      data.toAccountId === null ||
-      data.toAccountId === ''
-    ) {
+    if (toAccountId === '') {
       return {
         valid: false,
         code: 'INVALID_TO_ACCOUNT',
@@ -237,17 +247,32 @@ const ValidationService = {
       };
     }
 
-    var fromAccountValidation = this.validateAccount(data.fromAccountId);
-    if (!fromAccountValidation.valid) {
-      return fromAccountValidation;
+    var fromIsCash = fromAccountId.toUpperCase() === 'CASH';
+    var toIsCash = toAccountId.toUpperCase() === 'CASH';
+
+    if (fromIsCash && toIsCash) {
+      return {
+        valid: false,
+        code: 'INVALID_TRANSFER_ACCOUNT',
+        message: 'Transfer cannot move money from cash to cash.'
+      };
     }
 
-    var toAccountValidation = this.validateAccount(data.toAccountId);
-    if (!toAccountValidation.valid) {
-      return toAccountValidation;
+    if (!fromIsCash) {
+      var fromAccountValidation = this.validateAccount(fromAccountId);
+      if (!fromAccountValidation.valid) {
+        return fromAccountValidation;
+      }
     }
 
-    if (String(data.fromAccountId).trim() === String(data.toAccountId).trim()) {
+    if (!toIsCash) {
+      var toAccountValidation = this.validateAccount(toAccountId);
+      if (!toAccountValidation.valid) {
+        return toAccountValidation;
+      }
+    }
+
+    if (!fromIsCash && !toIsCash && fromAccountId === toAccountId) {
       return {
         valid: false,
         code: 'INVALID_TRANSFER_ACCOUNT',
@@ -261,8 +286,8 @@ const ValidationService = {
         transactionType: TRANSACTION_TYPES.TRANSFER,
         transactionDate: dateValidation.value,
         amount: amountValidation.value,
-        fromAccountId: data.fromAccountId,
-        toAccountId: data.toAccountId,
+        fromAccountId: fromAccountId,
+        toAccountId: toAccountId,
         notes: data.notes || ''
       }
     };

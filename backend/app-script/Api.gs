@@ -272,9 +272,13 @@ const Api = {
    */
   handleGetBalances: function() {
 
-    return ResponseUtil.error(
-      'NOT_IMPLEMENTED',
-      'GET_BALANCES is not implemented yet'
+    const balances = BalanceService.getBalances();
+
+    return ResponseUtil.success(
+      {
+        balances: balances
+      },
+      'Balances fetched successfully'
     );
   },
 
@@ -284,7 +288,7 @@ const Api = {
    */
   handleCreateTransaction: function(request) {
 
-    if (!request.data) {
+    if (!request || !request.data) {
 
       return ResponseUtil.error(
         'INVALID_REQUEST',
@@ -292,9 +296,29 @@ const Api = {
       );
     }
 
-    return ResponseUtil.error(
-      'NOT_IMPLEMENTED',
-      'CREATE_TRANSACTION is not implemented yet'
+    const validation = ValidationService.validateTransaction(request.data);
+
+    if (!validation.valid) {
+      return ResponseUtil.error(
+        validation.code,
+        validation.message
+      );
+    }
+
+    const created = TransactionService.createTransaction(validation.value);
+
+    if (!created || !created.success) {
+      return ResponseUtil.error(
+        created && created.code ? created.code : 'SERVER_ERROR',
+        created && created.message ? created.message : 'Unable to create transaction.'
+      );
+    }
+
+    return ResponseUtil.success(
+      {
+        transactionId: created.transactionId
+      },
+      'Transaction created successfully'
     );
   },
 
@@ -356,6 +380,9 @@ function doGet(e) {
     switch (action) {
       case "GET_MASTER_DATA":
         return handleGetMasterData_();
+
+      case "GET_BALANCES":
+        return handleGetBalances_();
 
       default:
         return createJsonResponse_({
@@ -421,5 +448,18 @@ function handleGetMasterData_() {
       configuration: configuration
     },
     message: "Master data fetched successfully"
+  });
+}
+
+function handleGetBalances_() {
+  const balances = BalanceService.getBalances();
+
+  return createJsonResponse_({
+    success: true,
+    action: "GET_BALANCES",
+    data: {
+      balances: balances
+    },
+    message: "Balances fetched successfully"
   });
 }
