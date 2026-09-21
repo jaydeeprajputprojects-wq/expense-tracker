@@ -1,0 +1,25 @@
+### Invalid transaction type
+POST https://script.google.com/macros/s/AKfycbx2fZsDgM3RCFVkSQhM1ai4kr4kyc7AbTfWUP1QWdwZhQwmhdqX_ZG03WDQhsIm5IyC/exec
+Content-Type: application/json
+
+{
+  "action": "CREATE_TRANSACTION",
+  "data": {
+    "transactionType": "LOAN",
+    "transactionDate": "21-09-2026",
+    "amount": 100,
+    "categoryId": "CAT001",
+    "paymentMethod": "BANK",
+    "paidFromAccountId": "ACC001",
+    "notes": "Invalid transaction type"
+  }
+}
+
+### Expected output
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_TRANSACTION_TYPE",
+    "message": "Transaction type is invalid."
+  }
+}

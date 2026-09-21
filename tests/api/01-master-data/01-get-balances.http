@@ -1,0 +1,38 @@
+### GET balances
+GET https://script.google.com/macros/s/AKfycbx2fZsDgM3RCFVkSQhM1ai4kr4kyc7AbTfWUP1QWdwZhQwmhdqX_ZG03WDQhsIm5IyC/exec?action=GET_BALANCES
+
+### Expected output
+{
+  "success": true,
+  "message": "Request successful",
+  "data": [
+    {
+      "accountId": "ACC001",
+      "accountName": "Bank Account",
+      "accountType": "BANK",
+      "openingBalance": 50000,
+      "currentBalance": 25000
+    },
+    {
+      "accountId": "ACC002",
+      "accountName": "Savings Account",
+      "accountType": "BANK",
+      "openingBalance": 20000,
+      "currentBalance": 30000
+    },
+    {
+      "accountId": "ACC003",
+      "accountName": "Credit Card",
+      "accountType": "CREDIT_CARD",
+      "openingBalance": 15000,
+      "currentBalance": 10000
+    },
+    {
+      "accountId": "ACC004",
+      "accountName": "Gift Card",
+      "accountType": "GIFT_CARD",
+      "openingBalance": 5000,
+      "currentBalance": 10000
+    }
+  ]
+}

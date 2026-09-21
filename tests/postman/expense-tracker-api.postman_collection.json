@@ -1,0 +1,531 @@
+{
+  "info": {
+    "name": "Expense Tracker API Tests",
+    "description": "Ready-to-import Postman collection for the Google Apps Script expense tracker backend.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "a1d3e5ee-827c-4b47-9d1f-6f8fb33d06d5"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://script.google.com/macros/s/AKfycbx2fZsDgM3RCFVkSQhM1ai4kr4kyc7AbTfWUP1QWdwZhQwmhdqX_ZG03WDQhsIm5IyC/exec",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Master Data",
+      "item": [
+        {
+          "name": "GET Balances",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}?action=GET_BALANCES"
+          },
+          "response": [
+            {
+              "name": "Expected Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}?action=GET_BALANCES"
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Request successful\",\n  \"data\": [\n    {\n      \"accountId\": \"ACC001\",\n      \"accountName\": \"Bank Account\",\n      \"accountType\": \"BANK\",\n      \"openingBalance\": 50000,\n      \"currentBalance\": 25000\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Expense",
+      "item": [
+        {
+          "name": "01 Valid Bank Expense",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"EXPENSE\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 100,\n    \"categoryId\": \"CAT001\",\n    \"paymentMethod\": \"BANK\",\n    \"paidFromAccountId\": \"ACC001\",\n    \"notes\": \"Groceries\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}"
+          },
+          "response": [
+            {
+              "name": "Expected Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"EXPENSE\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 100,\n    \"categoryId\": \"CAT001\",\n    \"paymentMethod\": \"BANK\",\n    \"paidFromAccountId\": \"ACC001\",\n    \"notes\": \"Groceries\"\n  }\n}"
+                },
+                "url": "{{baseUrl}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Transaction created successfully\",\n  \"data\": {\n    \"transactionId\": \"TXN-<generated>\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "02 Invalid Gift Card Balance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"EXPENSE\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 5000,\n    \"categoryId\": \"CAT001\",\n    \"paymentMethod\": \"GIFT_CARD\",\n    \"paidFromAccountId\": \"ACC004\",\n    \"notes\": \"Gift card insufficient balance\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}"
+          },
+          "response": [
+            {
+              "name": "Expected Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"EXPENSE\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 5000,\n    \"categoryId\": \"CAT001\",\n    \"paymentMethod\": \"GIFT_CARD\",\n    \"paidFromAccountId\": \"ACC004\",\n    \"notes\": \"Gift card insufficient balance\"\n  }\n}"
+                },
+                "url": "{{baseUrl}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"INSUFFICIENT_GIFT_CARD_BALANCE\",\n    \"message\": \"Gift card balance is insufficient for this transaction.\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "03 Valid Gift Card Expense",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"EXPENSE\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 200,\n    \"categoryId\": \"CAT001\",\n    \"paymentMethod\": \"GIFT_CARD\",\n    \"paidFromAccountId\": \"ACC004\",\n    \"notes\": \"Gift card purchase\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}"
+          },
+          "response": [
+            {
+              "name": "Expected Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"EXPENSE\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 200,\n    \"categoryId\": \"CAT001\",\n    \"paymentMethod\": \"GIFT_CARD\",\n    \"paidFromAccountId\": \"ACC004\",\n    \"notes\": \"Gift card purchase\"\n  }\n}"
+                },
+                "url": "{{baseUrl}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Transaction created successfully\",\n  \"data\": {\n    \"transactionId\": \"TXN-<generated>\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Income",
+      "item": [
+        {
+          "name": "01 Valid Income",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"INCOME\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 2500,\n    \"categoryId\": \"CAT001\",\n    \"receivedIntoAccountId\": \"ACC001\",\n    \"notes\": \"Salary\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}"
+          },
+          "response": [
+            {
+              "name": "Expected Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"INCOME\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 2500,\n    \"categoryId\": \"CAT001\",\n    \"receivedIntoAccountId\": \"ACC001\",\n    \"notes\": \"Salary\"\n  }\n}"
+                },
+                "url": "{{baseUrl}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Transaction created successfully\",\n  \"data\": {\n    \"transactionId\": \"TXN-<generated>\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Transfer",
+      "item": [
+        {
+          "name": "01 Valid Bank to Bank",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"TRANSFER\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 20000,\n    \"fromAccountId\": \"ACC001\",\n    \"toAccountId\": \"ACC002\",\n    \"notes\": \"move\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}"
+          },
+          "response": [
+            {
+              "name": "Expected Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"TRANSFER\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 20000,\n    \"fromAccountId\": \"ACC001\",\n    \"toAccountId\": \"ACC002\",\n    \"notes\": \"move\"\n  }\n}"
+                },
+                "url": "{{baseUrl}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Transaction created successfully\",\n  \"data\": {\n    \"transactionId\": \"TXN-<generated>\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "02 Valid Bank to Cash",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"TRANSFER\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 2500,\n    \"fromAccountId\": \"ACC001\",\n    \"toAccountId\": \"CASH\",\n    \"notes\": \"withdraw\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}"
+          },
+          "response": [
+            {
+              "name": "Expected Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"TRANSFER\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 2500,\n    \"fromAccountId\": \"ACC001\",\n    \"toAccountId\": \"CASH\",\n    \"notes\": \"withdraw\"\n  }\n}"
+                },
+                "url": "{{baseUrl}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Transaction created successfully\",\n  \"data\": {\n    \"transactionId\": \"TXN-<generated>\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "03 Valid Cash to Bank",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"TRANSFER\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 2500,\n    \"fromAccountId\": \"CASH\",\n    \"toAccountId\": \"ACC001\",\n    \"notes\": \"deposit\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}"
+          },
+          "response": [
+            {
+              "name": "Expected Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"TRANSFER\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 2500,\n    \"fromAccountId\": \"CASH\",\n    \"toAccountId\": \"ACC001\",\n    \"notes\": \"deposit\"\n  }\n}"
+                },
+                "url": "{{baseUrl}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Transaction created successfully\",\n  \"data\": {\n    \"transactionId\": \"TXN-<generated>\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "04 Invalid Same Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"TRANSFER\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 100,\n    \"fromAccountId\": \"ACC001\",\n    \"toAccountId\": \"ACC001\",\n    \"notes\": \"same account\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}"
+          },
+          "response": [
+            {
+              "name": "Expected Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"TRANSFER\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 100,\n    \"fromAccountId\": \"ACC001\",\n    \"toAccountId\": \"ACC001\",\n    \"notes\": \"same account\"\n  }\n}"
+                },
+                "url": "{{baseUrl}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"INVALID_TRANSFER_ACCOUNT\",\n    \"message\": \"From and To accounts must be different.\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Validation",
+      "item": [
+        {
+          "name": "01 Invalid Date",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"EXPENSE\",\n    \"transactionDate\": \"31-02-2026\",\n    \"amount\": 100,\n    \"categoryId\": \"CAT001\",\n    \"paymentMethod\": \"BANK\",\n    \"paidFromAccountId\": \"ACC001\",\n    \"notes\": \"Invalid date\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}"
+          },
+          "response": [
+            {
+              "name": "Expected Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"EXPENSE\",\n    \"transactionDate\": \"31-02-2026\",\n    \"amount\": 100,\n    \"categoryId\": \"CAT001\",\n    \"paymentMethod\": \"BANK\",\n    \"paidFromAccountId\": \"ACC001\",\n    \"notes\": \"Invalid date\"\n  }\n}"
+                },
+                "url": "{{baseUrl}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"INVALID_TRANSACTION_DATE\",\n    \"message\": \"Transaction date is not a valid calendar date.\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "02 Invalid Amount",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"EXPENSE\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": -100,\n    \"categoryId\": \"CAT001\",\n    \"paymentMethod\": \"BANK\",\n    \"paidFromAccountId\": \"ACC001\",\n    \"notes\": \"Invalid amount\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}"
+          },
+          "response": [
+            {
+              "name": "Expected Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"EXPENSE\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": -100,\n    \"categoryId\": \"CAT001\",\n    \"paymentMethod\": \"BANK\",\n    \"paidFromAccountId\": \"ACC001\",\n    \"notes\": \"Invalid amount\"\n  }\n}"
+                },
+                "url": "{{baseUrl}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"INVALID_TRANSACTION_AMOUNT\",\n    \"message\": \"Transaction amount must be greater than zero.\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "03 Invalid Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"EXPENSE\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 100,\n    \"categoryId\": \"CAT001\",\n    \"paymentMethod\": \"BANK\",\n    \"paidFromAccountId\": \"ACC999\",\n    \"notes\": \"Invalid account\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}"
+          },
+          "response": [
+            {
+              "name": "Expected Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"EXPENSE\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 100,\n    \"categoryId\": \"CAT001\",\n    \"paymentMethod\": \"BANK\",\n    \"paidFromAccountId\": \"ACC999\",\n    \"notes\": \"Invalid account\"\n  }\n}"
+                },
+                "url": "{{baseUrl}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"ACCOUNT_NOT_FOUND\",\n    \"message\": \"Account not found.\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "04 Invalid Transaction Type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"LOAN\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 100,\n    \"categoryId\": \"CAT001\",\n    \"paymentMethod\": \"BANK\",\n    \"paidFromAccountId\": \"ACC001\",\n    \"notes\": \"Invalid transaction type\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}"
+          },
+          "response": [
+            {
+              "name": "Expected Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"CREATE_TRANSACTION\",\n  \"data\": {\n    \"transactionType\": \"LOAN\",\n    \"transactionDate\": \"21-09-2026\",\n    \"amount\": 100,\n    \"categoryId\": \"CAT001\",\n    \"paymentMethod\": \"BANK\",\n    \"paidFromAccountId\": \"ACC001\",\n    \"notes\": \"Invalid transaction type\"\n  }\n}"
+                },
+                "url": "{{baseUrl}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"INVALID_TRANSACTION_TYPE\",\n    \"message\": \"Transaction type is invalid.\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

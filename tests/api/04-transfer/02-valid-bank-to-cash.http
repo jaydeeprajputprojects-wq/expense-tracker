@@ -1,0 +1,24 @@
+### Valid bank-to-cash transfer
+POST https://script.google.com/macros/s/AKfycbx2fZsDgM3RCFVkSQhM1ai4kr4kyc7AbTfWUP1QWdwZhQwmhdqX_ZG03WDQhsIm5IyC/exec
+Content-Type: application/json
+
+{
+  "action": "CREATE_TRANSACTION",
+  "data": {
+    "transactionType": "TRANSFER",
+    "transactionDate": "21-09-2026",
+    "amount": 2500,
+    "fromAccountId": "ACC001",
+    "toAccountId": "CASH",
+    "notes": "withdraw"
+  }
+}
+
+### Expected output
+{
+  "success": true,
+  "message": "Transaction created successfully",
+  "data": {
+    "transactionId": "TXN-<generated>"
+  }
+}
