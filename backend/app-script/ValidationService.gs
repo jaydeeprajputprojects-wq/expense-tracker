@@ -126,6 +126,19 @@ const ValidationService = {
       };
     }
 
+    if (paymentMethod === PAYMENT_METHODS.GIFT_CARD) {
+      var giftCardBalance = Number(accountValidation.value.openingBalance || 0);
+      var requestedAmount = Number(amountValidation.value);
+
+      if (giftCardBalance < requestedAmount) {
+        return {
+          valid: false,
+          code: 'INSUFFICIENT_GIFT_CARD_BALANCE',
+          message: 'Gift card balance is insufficient for this transaction.'
+        };
+      }
+    }
+
     return {
       valid: true,
       value: {

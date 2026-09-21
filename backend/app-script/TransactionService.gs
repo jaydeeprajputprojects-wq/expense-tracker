@@ -1,7 +1,51 @@
 const TransactionService = {
 
   createTransaction: function(data) {
-    // To be implemented
+    if (!data || typeof data !== 'object') {
+      return {
+        success: false,
+        code: 'INVALID_REQUEST',
+        message: 'Transaction request is required.'
+      };
+    }
+
+    const validation = ValidationService.validateTransaction(data);
+
+    if (!validation.valid) {
+      return {
+        success: false,
+        code: validation.code,
+        message: validation.message
+      };
+    }
+
+    const transactionId = generateTransactionId_();
+    const now = new Date();
+
+    const transactionRecord = {
+      Transaction_ID: transactionId,
+      Transaction_Date: validation.value.transactionDate,
+      Transaction_Type: validation.value.transactionType,
+      Amount: validation.value.amount,
+      Category_ID: validation.value.categoryId || '',
+      Payment_Method: validation.value.paymentMethod || '',
+      Paid_From_Account_ID: validation.value.paidFromAccountId || '',
+      Received_Into_Account_ID: validation.value.receivedIntoAccountId || '',
+      From_Account_ID: validation.value.fromAccountId || '',
+      To_Account_ID: validation.value.toAccountId || '',
+      Notes: validation.value.notes || '',
+      Created_Date: now,
+      Updated_Date: now,
+      Status: 'ACTIVE'
+    };
+
+    appendRecord(CONFIG.SHEETS.TRANSACTIONS, transactionRecord);
+
+    return {
+      success: true,
+      transactionId: transactionId,
+      record: transactionRecord
+    };
   },
 
   updateTransaction: function(transactionId, data) {
@@ -22,61 +66,36 @@ const TransactionService = {
 
 };
 
+function generateTransactionId_() {
+  const today = new Date();
+  const datePart = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, '0'),
+    String(today.getDate()).padStart(2, '0')
+  ].join('');
+
+  const randomPart = String(Utilities.getUuid())
+    .replace(/-/g, '')
+    .slice(0, 6)
+    .toUpperCase();
+
+  return 'TXN-' + datePart + '-' + randomPart;
+}
+
 function createTransaction(transaction) {
+  const result = TransactionService.createTransaction(transaction);
 
-  // 1. Validate request object
-  if (!transaction || typeof transaction !== 'object') {
+  if (!result || !result.success) {
     return ResponseUtil.error(
-      'INVALID_REQUEST',
-      'Transaction request is required.'
+      result && result.code ? result.code : 'SERVER_ERROR',
+      result && result.message ? result.message : 'Unable to create transaction.'
     );
   }
 
-  // 2. Validate transaction date
-  var dateValidation = validateTransactionDate(
-    transaction.transactionDate
+  return ResponseUtil.success(
+    { transactionId: result.transactionId },
+    'Transaction created successfully'
   );
-
-  if (!dateValidation.valid) {
-    return ResponseUtil.error(
-      dateValidation.code,
-      dateValidation.message
-    );
-  }
-
-  // 3. Validate transaction amount
-  var amountValidation = ValidationService.validateTransaction(transaction);
-
-  if (!amountValidation.valid) {
-    return ResponseUtil.error(
-      amountValidation.code,
-      amountValidation.message
-    );
-  }
-
-  // 4. Preserve the validated values
-  var validatedTransactionDate = dateValidation.value;
-  var validatedAmount = amountValidation.value;
-
-  // 5. Continue with the existing transaction validations
-  //    Example:
-  //    - Account validation
-  //    - Category validation
-  //    - Transaction type validation
-
-  // 6. Build the transaction row
-  var transactionRow = [
-    transaction.id,
-    validatedTransactionDate,
-    transaction.accountId,
-    transaction.categoryId,
-    transaction.type,
-    validatedAmount,
-    transaction.description
-  ];
-
-  // 7. Save using the existing repository method
-  return SheetRepository.appendTransaction(transactionRow);
 }
 
 function testInvalidDate() {

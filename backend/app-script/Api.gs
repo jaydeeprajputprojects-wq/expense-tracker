@@ -284,7 +284,7 @@ const Api = {
    */
   handleCreateTransaction: function(request) {
 
-    if (!request.data) {
+    if (!request || !request.data) {
 
       return ResponseUtil.error(
         'INVALID_REQUEST',
@@ -292,9 +292,29 @@ const Api = {
       );
     }
 
-    return ResponseUtil.error(
-      'NOT_IMPLEMENTED',
-      'CREATE_TRANSACTION is not implemented yet'
+    const validation = ValidationService.validateTransaction(request.data);
+
+    if (!validation.valid) {
+      return ResponseUtil.error(
+        validation.code,
+        validation.message
+      );
+    }
+
+    const created = TransactionService.createTransaction(validation.value);
+
+    if (!created || !created.success) {
+      return ResponseUtil.error(
+        created && created.code ? created.code : 'SERVER_ERROR',
+        created && created.message ? created.message : 'Unable to create transaction.'
+      );
+    }
+
+    return ResponseUtil.success(
+      {
+        transactionId: created.transactionId
+      },
+      'Transaction created successfully'
     );
   },
 
