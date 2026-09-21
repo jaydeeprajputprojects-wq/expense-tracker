@@ -66,6 +66,7 @@ const BalanceService = {
       var receivedIntoAccountId = String(transaction.Received_Into_Account_ID || '').trim();
       var fromAccountId = String(transaction.From_Account_ID || '').trim();
       var toAccountId = String(transaction.To_Account_ID || '').trim();
+      var accountType = String(account.accountType || '').trim().toUpperCase();
 
       if (transactionType === TRANSACTION_TYPES.EXPENSE && paidFromAccountId === normalizedAccountId) {
         currentBalance -= amount;
@@ -76,12 +77,23 @@ const BalanceService = {
       }
 
       if (transactionType === TRANSACTION_TYPES.TRANSFER) {
-        if (fromAccountId === normalizedAccountId) {
-          currentBalance -= amount;
+        var fromIsCash = fromAccountId.toUpperCase() === 'CASH';
+        var toIsCash = toAccountId.toUpperCase() === 'CASH';
+
+        if (!fromIsCash && fromAccountId === normalizedAccountId) {
+          if (accountType === ACCOUNT_TYPES.CREDIT_CARD) {
+            currentBalance += amount;
+          } else {
+            currentBalance -= amount;
+          }
         }
 
-        if (toAccountId === normalizedAccountId) {
-          currentBalance += amount;
+        if (!toIsCash && toAccountId === normalizedAccountId) {
+          if (accountType === ACCOUNT_TYPES.CREDIT_CARD) {
+            currentBalance -= amount;
+          } else {
+            currentBalance += amount;
+          }
         }
       }
     });
