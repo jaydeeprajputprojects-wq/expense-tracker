@@ -32,12 +32,96 @@ const ValidationService = {
     // To be implemented
   },
 
-  validateAccount: function(accountId) {
-    // To be implemented
+  validateAccount: function(accountId, expectedType) {
+    if (
+      accountId === undefined ||
+      accountId === null ||
+      accountId === ''
+    ) {
+      return {
+        valid: false,
+        code: 'INVALID_ACCOUNT_ID',
+        message: 'Account ID is required.'
+      };
+    }
+
+    var normalizedAccountId = String(accountId).trim();
+
+    if (normalizedAccountId === '') {
+      return {
+        valid: false,
+        code: 'INVALID_ACCOUNT_ID',
+        message: 'Account ID is required.'
+      };
+    }
+
+    var accounts = getAccounts();
+    var account = accounts.find(function(item) {
+      return item.accountId === normalizedAccountId;
+    });
+
+    if (!account) {
+      return {
+        valid: false,
+        code: 'ACCOUNT_NOT_FOUND',
+        message: 'Account not found.'
+      };
+    }
+
+    if (expectedType && account.accountType !== expectedType) {
+      return {
+        valid: false,
+        code: 'INVALID_ACCOUNT_TYPE',
+        message: 'Account type does not match the expected payment method.'
+      };
+    }
+
+    return {
+      valid: true,
+      value: account
+    };
   },
 
   validateCategory: function(categoryId) {
-    // To be implemented
+    if (
+      categoryId === undefined ||
+      categoryId === null ||
+      categoryId === ''
+    ) {
+      return {
+        valid: false,
+        code: 'INVALID_CATEGORY_ID',
+        message: 'Category ID is required.'
+      };
+    }
+
+    var normalizedCategoryId = String(categoryId).trim();
+
+    if (normalizedCategoryId === '') {
+      return {
+        valid: false,
+        code: 'INVALID_CATEGORY_ID',
+        message: 'Category ID is required.'
+      };
+    }
+
+    var categories = getCategories();
+    var category = categories.find(function(item) {
+      return item.Category_ID === normalizedCategoryId;
+    });
+
+    if (!category) {
+      return {
+        valid: false,
+        code: 'CATEGORY_NOT_FOUND',
+        message: 'Category not found.'
+      };
+    }
+
+    return {
+      valid: true,
+      value: category
+    };
   }
 
 };
@@ -261,6 +345,55 @@ function testValidateTransactionAmountValid() {
   }
 }
 
+function testValidateAccountRequired() {
+  var result = ValidationService.validateAccount('');
+  if (result.valid !== false || result.code !== 'INVALID_ACCOUNT_ID') {
+    throw new Error('Account ID required validation failed');
+  }
+}
+
+function testValidateAccountExists() {
+  var result = ValidationService.validateAccount('ACC999');
+  if (result.valid !== false || result.code !== 'ACCOUNT_NOT_FOUND') {
+    throw new Error('Missing account should raise ACCOUNT_NOT_FOUND');
+  }
+}
+
+function testValidateAccountTypeMismatch() {
+  var result = ValidationService.validateAccount('ACC001', 'CREDIT_CARD');
+  if (result.valid !== false || result.code !== 'INVALID_ACCOUNT_TYPE') {
+    throw new Error('Account type validation failed');
+  }
+}
+
+function testValidateAccountValid() {
+  var result = ValidationService.validateAccount('ACC001', 'BANK');
+  if (result.valid !== true || result.value.accountId !== 'ACC001') {
+    throw new Error('Valid account validation failed');
+  }
+}
+
+function testValidateCategoryRequired() {
+  var result = ValidationService.validateCategory('');
+  if (result.valid !== false || result.code !== 'INVALID_CATEGORY_ID') {
+    throw new Error('Category ID required validation failed');
+  }
+}
+
+function testValidateCategoryExists() {
+  var result = ValidationService.validateCategory('CAT999');
+  if (result.valid !== false || result.code !== 'CATEGORY_NOT_FOUND') {
+    throw new Error('Missing category should raise CATEGORY_NOT_FOUND');
+  }
+}
+
+function testValidateCategoryValid() {
+  var result = ValidationService.validateCategory('CAT001');
+  if (result.valid !== true || result.value.Category_ID !== 'CAT001') {
+    throw new Error('Valid category validation failed');
+  }
+}
+
 function runAllTransactionAmountValidationTests() {
   var tests = [
     testValidateTransactionAmountRequired,
@@ -287,5 +420,36 @@ function runAllTransactionAmountValidationTests() {
 
   if (failed > 0) {
     throw new Error('US-014 amount validation tests failed');
+  }
+}
+
+function runAllAccountAndCategoryValidationTests() {
+  var tests = [
+    testValidateAccountRequired,
+    testValidateAccountExists,
+    testValidateAccountTypeMismatch,
+    testValidateAccountValid,
+    testValidateCategoryRequired,
+    testValidateCategoryExists,
+    testValidateCategoryValid
+  ];
+
+  var passed = 0;
+  var failed = 0;
+
+  tests.forEach(function(testFn) {
+    try {
+      testFn();
+      passed++;
+    } catch (error) {
+      failed++;
+      Logger.log('FAILED: ' + testFn.name + ' | ' + error.message);
+    }
+  });
+
+  Logger.log('Account/category validation tests passed: ' + passed + '/' + tests.length);
+
+  if (failed > 0) {
+    throw new Error('US-015/US-016 validation tests failed');
   }
 }
