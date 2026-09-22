@@ -143,7 +143,81 @@ const TransactionService = {
   },
 
   deleteTransaction: function(transactionId) {
-    // To be implemented
+    if (
+      transactionId === undefined ||
+      transactionId === null ||
+      String(transactionId).trim() === ''
+    ) {
+      return {
+        success: false,
+        code: 'INVALID_REQUEST',
+        message: 'transactionId is required'
+      };
+    }
+
+    const normalizedTransactionId = String(transactionId).trim();
+    const lock = LockService && LockService.getScriptLock ? LockService.getScriptLock() : null;
+
+    if (lock) {
+      lock.waitLock(30000);
+    }
+
+    try {
+      const records = getAllRecords(CONFIG.SHEETS.TRANSACTIONS) || [];
+      const currentRecord = records.find(function(item) {
+        return String(item.Transaction_ID || item.transactionId || '').trim() === normalizedTransactionId;
+      });
+
+      if (!currentRecord) {
+        return {
+          success: false,
+          code: 'TRANSACTION_NOT_FOUND',
+          message: 'Transaction not found'
+        };
+      }
+
+      const status = String(currentRecord.Status || currentRecord.status || 'ACTIVE').trim().toUpperCase();
+
+      if (status === 'DELETED') {
+        return {
+          success: false,
+          code: 'TRANSACTION_ALREADY_DELETED',
+          message: 'Transaction is already deleted'
+        };
+      }
+
+      const rowLookup = findRecordWithRow(CONFIG.SHEETS.TRANSACTIONS, { Transaction_ID: currentRecord.Transaction_ID });
+
+      if (!rowLookup) {
+        return {
+          success: false,
+          code: 'TRANSACTION_NOT_FOUND',
+          message: 'Transaction not found'
+        };
+      }
+
+      const deletedRecord = Object.assign({}, currentRecord);
+      deletedRecord.Status = 'DELETED';
+      deletedRecord.Updated_Date = new Date();
+
+      updateRecord(CONFIG.SHEETS.TRANSACTIONS, rowLookup.rowNumber, deletedRecord);
+
+      return {
+        success: true,
+        transactionId: String(currentRecord.Transaction_ID || normalizedTransactionId),
+        record: deletedRecord
+      };
+    } catch (error) {
+      return {
+        success: false,
+        code: 'SERVER_ERROR',
+        message: error && error.message ? error.message : 'Unable to delete transaction.'
+      };
+    } finally {
+      if (lock) {
+        lock.releaseLock();
+      }
+    }
   },
 
   getTransactions: function() {
