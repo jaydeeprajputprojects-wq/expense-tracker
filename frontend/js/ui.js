@@ -1,11 +1,14 @@
-import { getMasterData } from "./api.js";
+import { getMasterData, getTransactions, getBalances, getTransaction, deleteTransaction } from "./api.js";
 import { initializeAccounts } from "./accounts.js";
-import { initializeTransactions } from "./transactions.js";
+import { initializeTransactions, populateFormWithTransaction } from "./transactions.js";
+import { formatCurrency } from "./utils.js";
 
 export const appState = {
   accounts: [],
   categories: [],
   configuration: [],
+  transactions: [],
+  balances: [],
   isLoading: false,
   error: null
 };
@@ -18,6 +21,16 @@ export async function loadMasterData() {
     categories: Array.isArray(masterData.categories) ? masterData.categories : [],
     configuration: Array.isArray(masterData.configuration) ? masterData.configuration : []
   };
+}
+
+export async function loadTransactions() {
+  const result = await getTransactions();
+  return Array.isArray(result.transactions) ? result.transactions : [];
+}
+
+export async function loadBalances() {
+  const result = await getBalances();
+  return Array.isArray(result.balances) ? result.balances : [];
 }
 
 function updateStatus(message, type = "info") {
@@ -39,12 +52,119 @@ function updateStatus(message, type = "info") {
   }
 }
 
+window.setStatusMessage = function(message, type = "info") {
+  updateStatus(message, type);
+};
+
+function renderBalanceSummary() {
+  const totalBalance = appState.balances.reduce((sum, balance) => sum + Number(balance.currentBalance || 0), 0);
+  const totalIncome = appState.transactions.filter((transaction) => transaction.transactionType === "INCOME").reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0);
+  const totalExpense = appState.transactions.filter((transaction) => transaction.transactionType === "EXPENSE").reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0);
+
+  const balanceValue = document.getElementById("balanceValue");
+  const incomeValue = document.getElementById("incomeValue");
+  const expenseValue = document.getElementById("expenseValue");
+
+  if (balanceValue) {
+    balanceValue.textContent = formatCurrency(totalBalance);
+  }
+
+  if (incomeValue) {
+    incomeValue.textContent = formatCurrency(totalIncome);
+  }
+
+  if (expenseValue) {
+    expenseValue.textContent = formatCurrency(totalExpense);
+  }
+}
+
+function renderTransactionTable() {
+  const tableBody = document.getElementById("transactionTableBody");
+
+  if (!tableBody) {
+    return;
+  }
+
+  if (!appState.transactions.length) {
+    tableBody.innerHTML = '<tr><td colspan="10" class="px-4 py-6 text-center text-sm text-gray-500">No transactions yet.</td></tr>';
+    return;
+  }
+
+  tableBody.innerHTML = appState.transactions.map((transaction) => {
+    const paymentMethod = transaction.paymentMethod || "-";
+    const fromValue = transaction.paidFromAccountName || transaction.fromAccountName || "-";
+    const toValue = transaction.receivedIntoAccountName || transaction.toAccountName || "-";
+    const amount = formatCurrency(Number(transaction.amount || 0));
+
+    return `
+      <tr class="border-t border-gray-200 text-sm">
+        <td class="px-4 py-3">${transaction.transactionDate || "-"}</td>
+        <td class="px-4 py-3">${transaction.transactionType || "-"}</td>
+        <td class="px-4 py-3">${transaction.categoryName || transaction.categoryId || "-"}</td>
+        <td class="px-4 py-3">${paymentMethod}</td>
+        <td class="px-4 py-3">${fromValue}</td>
+        <td class="px-4 py-3">${toValue}</td>
+        <td class="px-4 py-3 font-medium">${amount}</td>
+        <td class="px-4 py-3">${transaction.notes || "-"}</td>
+        <td class="px-4 py-3">
+          <div class="flex gap-2">
+            <button type="button" data-action="edit" data-transaction-id="${transaction.transactionId || ""}" class="rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white">Edit</button>
+            <button type="button" data-action="delete" data-transaction-id="${transaction.transactionId || ""}" class="rounded bg-red-600 px-2 py-1 text-xs font-medium text-white">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  tableBody.querySelectorAll("[data-action]").forEach((button) => {
+    button.addEventListener("click", async (event) => {
+      const action = event.currentTarget.dataset.action;
+      const transactionId = event.currentTarget.dataset.transactionId;
+
+      if (!transactionId) {
+        return;
+      }
+
+      if (action === "edit") {
+        try {
+          const result = await getTransaction(transactionId);
+          const transaction = result && result.transaction ? result.transaction : null;
+
+          if (transaction) {
+            populateFormWithTransaction(transaction);
+            updateStatus(`Editing transaction ${transactionId}.`, "info");
+          }
+        } catch (error) {
+          updateStatus(error.message || "Unable to load transaction.", "error");
+        }
+      }
+
+      if (action === "delete") {
+        const shouldDelete = window.confirm("Delete this transaction?");
+
+        if (!shouldDelete) {
+          return;
+        }
+
+        try {
+          await deleteTransaction(transactionId);
+          await initializeUI();
+        } catch (error) {
+          updateStatus(error.message || "Unable to delete transaction.", "error");
+        }
+      }
+    });
+  });
+}
+
 export async function initializeUI() {
   console.log("Finance Tracker UI initialized.");
 
   if (window.lucide) {
     window.lucide.createIcons();
   }
+
+  window.financeAppRefresh = () => initializeUI();
 
   appState.isLoading = true;
   updateStatus("Loading master data from Google Apps Script...", "info");
@@ -64,6 +184,11 @@ export async function initializeUI() {
     if (configCount) {
       configCount.textContent = String(appState.configuration.length);
     }
+
+    appState.transactions = await loadTransactions();
+    appState.balances = await loadBalances();
+    renderBalanceSummary();
+    renderTransactionTable();
 
     updateStatus("Master data loaded successfully. Transaction dropdowns are ready.", "success");
     console.log("Master data loaded successfully.", appState);
