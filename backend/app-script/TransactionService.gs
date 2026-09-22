@@ -57,14 +57,156 @@ const TransactionService = {
   },
 
   getTransactions: function() {
-    // To be implemented
+    const transactions = getAllRecords(CONFIG.SHEETS.TRANSACTIONS) || [];
+
+    return transactions
+      .filter(function(transaction) {
+        if (!transaction || typeof transaction !== 'object') {
+          return false;
+        }
+
+        const status = String(transaction.Status || transaction.status || 'ACTIVE').trim().toUpperCase();
+
+        return status !== 'DELETED';
+      })
+      .map(function(transaction) {
+        return mapTransactionRecord_(transaction);
+      })
+      .sort(sortTransactions_);
   },
 
   getTransaction: function(transactionId) {
-    // To be implemented
+    if (
+      transactionId === undefined ||
+      transactionId === null ||
+      String(transactionId).trim() === ''
+    ) {
+      return {
+        success: false,
+        code: 'INVALID_REQUEST',
+        message: 'transactionId is required'
+      };
+    }
+
+    const normalizedTransactionId = String(transactionId).trim();
+    const transactions = this.getTransactions();
+    const transaction = transactions.find(function(item) {
+      return String(item.transactionId || '').trim() === normalizedTransactionId;
+    });
+
+    if (!transaction) {
+      return {
+        success: false,
+        code: 'TRANSACTION_NOT_FOUND',
+        message: 'Transaction not found'
+      };
+    }
+
+    return {
+      success: true,
+      transaction: transaction
+    };
   }
 
 };
+
+function mapTransactionRecord_(record) {
+  const categories = getCategories() || [];
+  const accounts = getAccounts() || [];
+
+  const category = categories.find(function(item) {
+    return String(item.Category_ID || '').trim() === String(record.Category_ID || '').trim();
+  });
+
+  const resolveAccountName = function(accountIdValue) {
+    const normalized = String(accountIdValue || '').trim();
+
+    if (!normalized) {
+      return '';
+    }
+
+    const match = accounts.find(function(item) {
+      return String(item.accountId || '').trim() === normalized;
+    });
+
+    return match && match.accountName ? match.accountName : normalized;
+  };
+
+  return {
+    transactionId: record.Transaction_ID || record.transactionId || '',
+    transactionType: record.Transaction_Type || '',
+    transactionDate: record.Transaction_Date || '',
+    amount: Number(record.Amount || 0),
+    categoryId: record.Category_ID || '',
+    categoryName: category ? category.Category_Name || '' : '',
+    paymentMethod: record.Payment_Method || '',
+    paidFromAccountId: record.Paid_From_Account_ID || '',
+    paidFromAccountName: resolveAccountName(record.Paid_From_Account_ID),
+    receivedIntoAccountId: record.Received_Into_Account_ID || '',
+    receivedIntoAccountName: resolveAccountName(record.Received_Into_Account_ID),
+    fromAccountId: record.From_Account_ID || '',
+    fromAccountName: resolveAccountName(record.From_Account_ID),
+    toAccountId: record.To_Account_ID || '',
+    toAccountName: resolveAccountName(record.To_Account_ID),
+    notes: record.Notes || '',
+    status: String(record.Status || 'ACTIVE').trim().toUpperCase() || 'ACTIVE',
+    createdDate: record.Created_Date || '',
+    updatedDate: record.Updated_Date || ''
+  };
+}
+
+function sortTransactions_(left, right) {
+  const leftDate = dateToComparable_(left && left.transactionDate ? left.transactionDate : '');
+  const rightDate = dateToComparable_(right && right.transactionDate ? right.transactionDate : '');
+
+  if (leftDate !== rightDate) {
+    return leftDate - rightDate;
+  }
+
+  const leftKey = String(left && left.transactionId ? left.transactionId : '').trim();
+  const rightKey = String(right && right.transactionId ? right.transactionId : '').trim();
+
+  if (leftKey === rightKey) {
+    return 0;
+  }
+
+  return leftKey.localeCompare(rightKey);
+}
+
+function dateToComparable_(value) {
+  if (!value) {
+    return 0;
+  }
+
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+
+    if (!trimmed) {
+      return 0;
+    }
+
+    const isoMatch = trimmed.match(/^\d{4}-\d{2}-\d{2}/);
+    if (isoMatch) {
+      const isoDate = new Date(trimmed);
+      return isNaN(isoDate.getTime()) ? 0 : isoDate.getTime();
+    }
+
+    const ukMatch = trimmed.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+    if (ukMatch) {
+      const day = Number(ukMatch[1]);
+      const month = Number(ukMatch[2]) - 1;
+      const year = Number(ukMatch[3]);
+      const parsedDate = new Date(year, month, day);
+      return isNaN(parsedDate.getTime()) ? 0 : parsedDate.getTime();
+    }
+  }
+
+  return 0;
+}
 
 function generateTransactionId_() {
   const today = new Date();

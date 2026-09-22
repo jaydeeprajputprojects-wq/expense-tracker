@@ -240,9 +240,13 @@ const Api = {
    */
   handleGetTransactions: function(parameters) {
 
-    return ResponseUtil.error(
-      'NOT_IMPLEMENTED',
-      'GET_TRANSACTIONS is not implemented yet'
+    const transactions = TransactionService.getTransactions();
+
+    return ResponseUtil.success(
+      {
+        transactions: transactions
+      },
+      'Transactions fetched successfully'
     );
   },
 
@@ -252,7 +256,9 @@ const Api = {
    */
   handleGetTransaction: function(parameters) {
 
-    if (!parameters.transactionId) {
+    const transactionId = parameters && parameters.transactionId;
+
+    if (!transactionId || String(transactionId).trim() === '') {
 
       return ResponseUtil.error(
         'INVALID_REQUEST',
@@ -260,9 +266,20 @@ const Api = {
       );
     }
 
-    return ResponseUtil.error(
-      'NOT_IMPLEMENTED',
-      'GET_TRANSACTION is not implemented yet'
+    const result = TransactionService.getTransaction(transactionId);
+
+    if (!result || !result.success) {
+      return ResponseUtil.error(
+        result && result.code ? result.code : 'TRANSACTION_NOT_FOUND',
+        result && result.message ? result.message : 'Transaction not found'
+      );
+    }
+
+    return ResponseUtil.success(
+      {
+        transaction: result.transaction
+      },
+      'Transaction fetched successfully'
     );
   },
 
@@ -382,6 +399,12 @@ function doGet(e) {
       case "GET_MASTER_DATA":
         return handleGetMasterData_();
 
+      case "GET_TRANSACTIONS":
+        return handleGetTransactions_();
+
+      case "GET_TRANSACTION":
+        return handleGetTransaction_(e);
+
       case "GET_BALANCES":
         return handleGetBalances_();
 
@@ -449,6 +472,54 @@ function handleGetMasterData_() {
       configuration: configuration
     },
     message: "Master data fetched successfully"
+  });
+}
+
+function handleGetTransactions_() {
+  const transactions = TransactionService.getTransactions();
+
+  return createJsonResponse_({
+    success: true,
+    action: "GET_TRANSACTIONS",
+    data: {
+      transactions: transactions
+    },
+    message: "Transactions fetched successfully"
+  });
+}
+
+function handleGetTransaction_(e) {
+  const parameters = e && e.parameter ? e.parameter : {};
+  const transactionId = parameters.transactionId;
+
+  if (!transactionId || String(transactionId).trim() === '') {
+    return createJsonResponse_({
+      success: false,
+      action: "GET_TRANSACTION",
+      data: null,
+      message: "transactionId is required"
+    });
+  }
+
+  const result = TransactionService.getTransaction(transactionId);
+
+  if (!result || !result.success) {
+    return createJsonResponse_({
+      success: false,
+      action: "GET_TRANSACTION",
+      data: null,
+      code: result && result.code ? result.code : 'TRANSACTION_NOT_FOUND',
+      message: result && result.message ? result.message : 'Transaction not found'
+    });
+  }
+
+  return createJsonResponse_({
+    success: true,
+    action: "GET_TRANSACTION",
+    data: {
+      transaction: result.transaction
+    },
+    message: "Transaction fetched successfully"
   });
 }
 
