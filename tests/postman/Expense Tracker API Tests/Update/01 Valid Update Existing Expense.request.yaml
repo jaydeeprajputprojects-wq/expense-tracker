@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "action": "UPDATE_TRANSACTION",
+      "transactionId": "TXN-000001",
+      "data": {
+        "transactionType": "EXPENSE",
+        "transactionDate": "20-09-2026",
+        "amount": 2000,
+        "categoryId": "CAT001",
+        "paymentMethod": "BANK",
+        "paidFromAccountId": "ACC001",
+        "notes": "Updated expense"
+      }
+    }
+examples: ./.resources/01 Valid Update Existing Expense.resources/examples
+order: 1000

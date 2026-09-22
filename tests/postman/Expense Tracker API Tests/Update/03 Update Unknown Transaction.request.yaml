@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "action": "UPDATE_TRANSACTION",
+      "transactionId": "TXN-999999",
+      "data": {
+        "transactionType": "EXPENSE",
+        "transactionDate": "22-09-2026",
+        "amount": 500,
+        "categoryId": "CAT001",
+        "paymentMethod": "BANK",
+        "paidFromAccountId": "ACC001",
+        "notes": "Unknown transaction update"
+      }
+    }
+examples: ./.resources/03 Update Unknown Transaction.resources/examples
+order: 1020
