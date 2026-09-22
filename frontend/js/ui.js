@@ -16,9 +16,29 @@ export const appState = {
 export async function loadMasterData() {
   const masterData = await getMasterData();
 
+  const normalizedAccounts = (Array.isArray(masterData.accounts) ? masterData.accounts : []).map((account) => ({
+    ...account,
+    accountId: account.accountId || account.Account_ID || "",
+    accountName: account.accountName || account.Account_Name || "",
+    accountType: account.accountType || account.Account_Type || "",
+    status: account.status || account.Status || "ACTIVE"
+  }));
+
+  const normalizedCategories = (Array.isArray(masterData.categories) ? masterData.categories : []).map((category) => {
+    const categoryId = category.categoryId || category.Category_ID || category.category || category.id || "";
+    const categoryName = category.categoryName || category.Category_Name || category.name || category.Category || categoryId || "";
+
+    return {
+      ...category,
+      categoryId,
+      categoryName,
+      status: category.status || category.Status || "ACTIVE"
+    };
+  });
+
   return {
-    accounts: Array.isArray(masterData.accounts) ? masterData.accounts : [],
-    categories: Array.isArray(masterData.categories) ? masterData.categories : [],
+    accounts: normalizedAccounts,
+    categories: normalizedCategories,
     configuration: Array.isArray(masterData.configuration) ? masterData.configuration : []
   };
 }

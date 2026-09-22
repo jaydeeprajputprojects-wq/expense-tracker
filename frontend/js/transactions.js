@@ -2,7 +2,14 @@ import { populateSelect } from "./accounts.js";
 import { createTransaction, updateTransaction } from "./api.js";
 
 function getActiveCategories(categories = []) {
-  return categories.filter((category) => category && (category.status === undefined || category.status === "ACTIVE"));
+  return categories.filter((category) => {
+    if (!category) {
+      return false;
+    }
+
+    const status = category.status ?? category.Status ?? "ACTIVE";
+    return status === undefined || status === "ACTIVE";
+  });
 }
 
 function getAccountTypeForPaymentMethod(paymentMethod) {
@@ -21,6 +28,44 @@ function getAccountTypeForPaymentMethod(paymentMethod) {
   }
 
   return "";
+}
+
+function formatDateForApi(dateValue) {
+  if (!dateValue) {
+    return "";
+  }
+
+  const normalized = String(dateValue).trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    const [year, month, day] = normalized.split("-");
+    return `${day}-${month}-${year}`;
+  }
+
+  if (/^\d{2}-\d{2}-\d{4}$/.test(normalized)) {
+    return normalized;
+  }
+
+  return normalized;
+}
+
+function formatDateForInput(dateValue) {
+  if (!dateValue) {
+    return "";
+  }
+
+  const normalized = String(dateValue).trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    return normalized;
+  }
+
+  if (/^\d{2}-\d{2}-\d{4}$/.test(normalized)) {
+    const [day, month, year] = normalized.split("-");
+    return `${year}-${month}-${day}`;
+  }
+
+  return normalized;
 }
 
 export function setFieldVisibility(type) {
@@ -86,7 +131,7 @@ export function populateFormWithTransaction(transaction = {}) {
 
   if (dateInput) {
     const dateValue = transaction.transactionDate || "";
-    dateInput.value = dateValue;
+    dateInput.value = formatDateForInput(dateValue);
   }
 
   if (amountInput) {
@@ -199,7 +244,7 @@ export function buildTransactionPayloadFromForm() {
   const transactionType = typeSelect ? typeSelect.value : "EXPENSE";
   const payload = {
     transactionType,
-    transactionDate: dateInput ? dateInput.value : "",
+    transactionDate: formatDateForApi(dateInput ? dateInput.value : ""),
     amount: Number(amountInput ? amountInput.value : 0),
     categoryId: categorySelect ? categorySelect.value : "",
     notes: notesInput ? notesInput.value : ""
@@ -318,8 +363,11 @@ export function initializeTransactions(state = { categories: [], accounts: [] })
 
     categories.forEach((category) => {
       const option = document.createElement("option");
-      option.value = category.categoryId || "";
-      option.textContent = category.categoryName || category.categoryId || "Unnamed";
+      const categoryId = category.categoryId || category.Category_ID || category.category || category.id || "";
+      const categoryName = category.categoryName || category.Category_Name || category.name || category.Category || categoryId || "Unnamed";
+
+      option.value = categoryId;
+      option.textContent = categoryName;
       categorySelect.appendChild(option);
     });
   }
