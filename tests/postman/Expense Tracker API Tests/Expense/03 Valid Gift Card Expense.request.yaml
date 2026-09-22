@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{baseUrl}}"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "action": "CREATE_TRANSACTION",
+      "data": {
+        "transactionType": "EXPENSE",
+        "transactionDate": "21-09-2026",
+        "amount": 200,
+        "categoryId": "CAT001",
+        "paymentMethod": "GIFT_CARD",
+        "paidFromAccountId": "ACC003",
+        "notes": "Gift card purchase"
+      }
+    }
+examples: ./.resources/03 Valid Gift Card Expense.resources/examples
+order: 3000

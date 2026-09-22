@@ -1,0 +1,24 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}?action=GET_BALANCES"
+  method: GET
+response:
+  statusCode: 200
+  statusText: OK
+  body:
+    type: text
+    content: |-
+      {
+        "success": true,
+        "message": "Request successful",
+        "data": [
+          {
+            "accountId": "ACC001",
+            "accountName": "Bank Account",
+            "accountType": "BANK",
+            "openingBalance": 50000,
+            "currentBalance": 25000
+          }
+        ]
+      }
+order: 1000

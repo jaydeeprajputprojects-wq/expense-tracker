@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "action": "CREATE_TRANSACTION",
+      "data": {
+        "transactionType": "TRANSFER",
+        "transactionDate": "21-09-2026",
+        "amount": 100,
+        "fromAccountId": "ACC001",
+        "toAccountId": "ACC001",
+        "notes": "same account"
+      }
+    }
+examples: ./.resources/04 Invalid Same Account.resources/examples
+order: 4000

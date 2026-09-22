@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{baseUrl}}"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "action": "CREATE_TRANSACTION",
+      "data": {
+        "transactionType": "EXPENSE",
+        "transactionDate": "21-09-2026",
+        "amount": -100,
+        "categoryId": "CAT001",
+        "paymentMethod": "BANK",
+        "paidFromAccountId": "ACC001",
+        "notes": "Invalid amount"
+      }
+    }
+examples: ./.resources/02 Invalid Amount.resources/examples
+order: 2000

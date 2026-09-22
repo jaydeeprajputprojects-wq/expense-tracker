@@ -1,19 +1,20 @@
 const BalanceService = {
 
   getBalances: function() {
-    var accounts = getAccounts();
+    var accounts = getAccounts() || [];
     var self = this;
 
     return accounts.map(function(account) {
-      var balance = self.calculateAccountBalance(account.accountId);
+      var accountId = account && account.accountId ? String(account.accountId).trim() : '';
+      var balance = self.calculateAccountBalance(accountId);
 
       return {
-        accountId: account.accountId,
-        accountName: account.accountName || account.accountId,
-        accountType: account.accountType,
-        openingBalance: Number(account.openingBalance || 0),
-        currentBalance: balance.currentBalance,
-        status: account.status || 'ACTIVE'
+        accountId: accountId,
+        accountName: account && account.accountName ? account.accountName : accountId,
+        accountType: account && account.accountType ? account.accountType : '',
+        openingBalance: Number(account && account.openingBalance !== undefined ? account.openingBalance : 0),
+        currentBalance: Number(balance && balance.currentBalance !== undefined ? balance.currentBalance : 0),
+        status: account && account.status ? account.status : 'ACTIVE'
       };
     });
   },
@@ -29,7 +30,7 @@ const BalanceService = {
       };
     }
 
-    var accounts = getAccounts();
+    var accounts = getAccounts() || [];
     var account = accounts.find(function(item) {
       return String(item.accountId || '').trim() === normalizedAccountId;
     });
@@ -44,9 +45,9 @@ const BalanceService = {
 
     var openingBalance = Number(account.openingBalance || 0);
     var currentBalance = openingBalance;
-    var transactions = getAllRecords(CONFIG.SHEETS.TRANSACTIONS);
+    var transactions = getAllRecords(CONFIG.SHEETS.TRANSACTIONS) || [];
 
-    if (!transactions || transactions.length === 0) {
+    if (!transactions.length) {
       return {
         accountId: account.accountId,
         openingBalance: openingBalance,
@@ -55,6 +56,10 @@ const BalanceService = {
     }
 
     transactions.forEach(function(transaction) {
+      if (!isTransactionActive_(transaction)) {
+        return;
+      }
+
       var amount = Number(transaction.Amount || 0);
 
       if (!isFinite(amount) || amount <= 0) {
@@ -69,7 +74,11 @@ const BalanceService = {
       var accountType = String(account.accountType || '').trim().toUpperCase();
 
       if (transactionType === TRANSACTION_TYPES.EXPENSE && paidFromAccountId === normalizedAccountId) {
-        currentBalance -= amount;
+        if (accountType === ACCOUNT_TYPES.CREDIT_CARD) {
+          currentBalance += amount;
+        } else {
+          currentBalance -= amount;
+        }
       }
 
       if (transactionType === TRANSACTION_TYPES.INCOME && receivedIntoAccountId === normalizedAccountId) {
@@ -81,11 +90,7 @@ const BalanceService = {
         var toIsCash = toAccountId.toUpperCase() === 'CASH';
 
         if (!fromIsCash && fromAccountId === normalizedAccountId) {
-          if (accountType === ACCOUNT_TYPES.CREDIT_CARD) {
-            currentBalance += amount;
-          } else {
-            currentBalance -= amount;
-          }
+          currentBalance -= amount;
         }
 
         if (!toIsCash && toAccountId === normalizedAccountId) {
@@ -106,3 +111,13 @@ const BalanceService = {
   }
 
 };
+
+function isTransactionActive_(transaction) {
+  if (!transaction || typeof transaction !== 'object') {
+    return false;
+  }
+
+  var status = String(transaction.Status || transaction.status || '').trim().toUpperCase();
+
+  return status === '' || status === 'ACTIVE';
+}

@@ -1,0 +1,34 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}"
+  method: POST
+  headers:
+    Content-Type: application/json
+  body:
+    type: text
+    content: |-
+      {
+        "action": "CREATE_TRANSACTION",
+        "data": {
+          "transactionType": "TRANSFER",
+          "transactionDate": "21-09-2026",
+          "amount": 2500,
+          "fromAccountId": "ACC001",
+          "toAccountId": "CASH",
+          "notes": "withdraw"
+        }
+      }
+response:
+  statusCode: 200
+  statusText: OK
+  body:
+    type: text
+    content: |-
+      {
+        "success": true,
+        "message": "Transaction created successfully",
+        "data": {
+          "transactionId": "TXN-<generated>"
+        }
+      }
+order: 1000

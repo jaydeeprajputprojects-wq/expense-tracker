@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "action": "CREATE_TRANSACTION",
+      "data": {
+        "transactionType": "INCOME",
+        "transactionDate": "21-09-2026",
+        "amount": 2500,
+        "categoryId": "CAT001",
+        "receivedIntoAccountId": "ACC001",
+        "notes": "Salary"
+      }
+    }
+examples: ./.resources/01 Valid Income.resources/examples
+order: 1000
