@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{baseUrl}}?action=GET_BALANCES"
+method: GET
+queryParams:
+  action: GET_BALANCES
+examples: ./.resources/GET Balances.resources/examples
+order: 1000

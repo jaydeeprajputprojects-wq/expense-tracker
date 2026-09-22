@@ -1,0 +1,13 @@
+# Use this workspace to collaborate
+workspace:
+  id: d4b0b57d-32a2-448b-8624-082b4294a277
+
+localResources:
+  collections:
+    - ../Expense Tracker API Tests
+
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+
+cloudResources:
+  collections:
+    ../Expense Tracker API Tests: a1d3e5ee-827c-4b47-9d1f-6f8fb33d06d5
