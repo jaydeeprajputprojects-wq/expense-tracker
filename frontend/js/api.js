@@ -1,4 +1,10 @@
-const API_BASE_URL = "https://script.google.com/macros/s/AKfycbx2fZsDgM3RCFVkSQhM1ai4kr4kyc7AbTfWUP1QWdwZhQwmhdqX_ZG03WDQhsIm5IyC/exec";
+const API_BASE_URL = "/api";
+
+function ensureHttpServerForApi() {
+  if (typeof window !== "undefined" && window.location && window.location.protocol === "file:") {
+    throw new Error("Open this app through a local web server (for example http://localhost:8000) instead of opening index.html directly. The file:// protocol blocks API requests.");
+  }
+}
 
 function buildApiUrl(endpoint = "") {
   if (!endpoint) {
@@ -10,6 +16,8 @@ function buildApiUrl(endpoint = "") {
 }
 
 export async function apiRequest(endpoint = "", options = {}) {
+  ensureHttpServerForApi();
+
   const requestOptions = {
     method: "GET",
     headers: {

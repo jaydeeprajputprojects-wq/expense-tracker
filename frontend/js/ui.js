@@ -16,9 +16,29 @@ export const appState = {
 export async function loadMasterData() {
   const masterData = await getMasterData();
 
+  const normalizedAccounts = (Array.isArray(masterData.accounts) ? masterData.accounts : []).map((account) => ({
+    ...account,
+    accountId: account.accountId || account.Account_ID || "",
+    accountName: account.accountName || account.Account_Name || "",
+    accountType: account.accountType || account.Account_Type || "",
+    status: account.status || account.Status || "ACTIVE"
+  }));
+
+  const normalizedCategories = (Array.isArray(masterData.categories) ? masterData.categories : []).map((category) => {
+    const categoryId = category.categoryId || category.Category_ID || category.category || category.id || "";
+    const categoryName = category.categoryName || category.Category_Name || category.name || category.Category || categoryId || "";
+
+    return {
+      ...category,
+      categoryId,
+      categoryName,
+      status: category.status || category.Status || "ACTIVE"
+    };
+  });
+
   return {
-    accounts: Array.isArray(masterData.accounts) ? masterData.accounts : [],
-    categories: Array.isArray(masterData.categories) ? masterData.categories : [],
+    accounts: normalizedAccounts,
+    categories: normalizedCategories,
     configuration: Array.isArray(masterData.configuration) ? masterData.configuration : []
   };
 }
@@ -33,15 +53,32 @@ export async function loadBalances() {
   return Array.isArray(result.balances) ? result.balances : [];
 }
 
-function updateStatus(message, type = "info") {
+function hideStatusMessage() {
   const statusElement = document.getElementById("appStatus");
 
   if (!statusElement) {
     return;
   }
 
-  statusElement.textContent = message;
-  statusElement.className = "mt-4 rounded-md border px-3 py-2 text-sm";
+  statusElement.classList.add("hidden", "opacity-0", "-translate-y-1");
+  statusElement.classList.remove("opacity-100", "translate-y-0");
+}
+
+function updateStatus(message, type = "info") {
+  const statusElement = document.getElementById("appStatus");
+  const statusText = document.getElementById("appStatusText");
+  const dismissButton = document.getElementById("appStatusDismiss");
+
+  if (!statusElement || !statusText) {
+    return;
+  }
+
+  statusElement.classList.remove("hidden");
+  statusElement.classList.remove("opacity-0", "-translate-y-1");
+  statusElement.classList.add("opacity-100", "translate-y-0");
+
+  statusText.textContent = message;
+  statusElement.className = "mt-4 rounded-md border px-3 py-2 text-sm transition-all duration-300 ease-out opacity-100 translate-y-0";
 
   if (type === "success") {
     statusElement.classList.add("border-emerald-200", "bg-emerald-50", "text-emerald-700");
@@ -50,11 +87,18 @@ function updateStatus(message, type = "info") {
   } else {
     statusElement.classList.add("border-blue-200", "bg-blue-50", "text-blue-700");
   }
+
+  if (dismissButton) {
+    dismissButton.classList.remove("hidden");
+    dismissButton.onclick = hideStatusMessage;
+  }
 }
 
 window.setStatusMessage = function(message, type = "info") {
   updateStatus(message, type);
 };
+
+window.hideStatusMessage = hideStatusMessage;
 
 function renderBalanceSummary() {
   const totalBalance = appState.balances.reduce((sum, balance) => sum + Number(balance.currentBalance || 0), 0);
@@ -158,13 +202,21 @@ function renderTransactionTable() {
 }
 
 export async function initializeUI() {
+  if (appState.isLoading) {
+    return;
+  }
+
   console.log("Finance Tracker UI initialized.");
 
   if (window.lucide) {
     window.lucide.createIcons();
   }
 
-  window.financeAppRefresh = () => initializeUI();
+  window.financeAppRefresh = async () => {
+    if (!appState.isLoading) {
+      await initializeUI();
+    }
+  };
 
   appState.isLoading = true;
   updateStatus("Loading master data from Google Apps Script...", "info");

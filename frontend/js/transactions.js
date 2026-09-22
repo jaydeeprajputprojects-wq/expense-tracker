@@ -2,7 +2,14 @@ import { populateSelect } from "./accounts.js";
 import { createTransaction, updateTransaction } from "./api.js";
 
 function getActiveCategories(categories = []) {
-  return categories.filter((category) => category && (category.status === undefined || category.status === "ACTIVE"));
+  return categories.filter((category) => {
+    if (!category) {
+      return false;
+    }
+
+    const status = category.status ?? category.Status ?? "ACTIVE";
+    return status === undefined || status === "ACTIVE";
+  });
 }
 
 function getAccountTypeForPaymentMethod(paymentMethod) {
@@ -21,6 +28,44 @@ function getAccountTypeForPaymentMethod(paymentMethod) {
   }
 
   return "";
+}
+
+function formatDateForApi(dateValue) {
+  if (!dateValue) {
+    return "";
+  }
+
+  const normalized = String(dateValue).trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    const [year, month, day] = normalized.split("-");
+    return `${day}-${month}-${year}`;
+  }
+
+  if (/^\d{2}-\d{2}-\d{4}$/.test(normalized)) {
+    return normalized;
+  }
+
+  return normalized;
+}
+
+function formatDateForInput(dateValue) {
+  if (!dateValue) {
+    return "";
+  }
+
+  const normalized = String(dateValue).trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    return normalized;
+  }
+
+  if (/^\d{2}-\d{2}-\d{4}$/.test(normalized)) {
+    const [day, month, year] = normalized.split("-");
+    return `${year}-${month}-${day}`;
+  }
+
+  return normalized;
 }
 
 export function setFieldVisibility(type) {
@@ -86,7 +131,7 @@ export function populateFormWithTransaction(transaction = {}) {
 
   if (dateInput) {
     const dateValue = transaction.transactionDate || "";
-    dateInput.value = dateValue;
+    dateInput.value = formatDateForInput(dateValue);
   }
 
   if (amountInput) {
@@ -199,7 +244,7 @@ export function buildTransactionPayloadFromForm() {
   const transactionType = typeSelect ? typeSelect.value : "EXPENSE";
   const payload = {
     transactionType,
-    transactionDate: dateInput ? dateInput.value : "",
+    transactionDate: formatDateForApi(dateInput ? dateInput.value : ""),
     amount: Number(amountInput ? amountInput.value : 0),
     categoryId: categorySelect ? categorySelect.value : "",
     notes: notesInput ? notesInput.value : ""
@@ -298,6 +343,10 @@ function refreshAccountDropdowns(state) {
   });
 }
 
+function waitForStatusDisplay(ms = 5000) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function initializeTransactions(state = { categories: [], accounts: [] }) {
   const categorySelect = document.getElementById("categorySelect");
   const categoryCount = document.getElementById("categoryCount");
@@ -318,8 +367,11 @@ export function initializeTransactions(state = { categories: [], accounts: [] })
 
     categories.forEach((category) => {
       const option = document.createElement("option");
-      option.value = category.categoryId || "";
-      option.textContent = category.categoryName || category.categoryId || "Unnamed";
+      const categoryId = category.categoryId || category.Category_ID || category.category || category.id || "";
+      const categoryName = category.categoryName || category.Category_Name || category.name || category.Category || categoryId || "Unnamed";
+
+      option.value = categoryId;
+      option.textContent = categoryName;
       categorySelect.appendChild(option);
     });
   }
@@ -328,20 +380,23 @@ export function initializeTransactions(state = { categories: [], accounts: [] })
     categoryCount.textContent = String(Array.isArray(state.categories) ? state.categories.length : 0);
   }
 
-  if (paymentMethodSelect) {
+  if (paymentMethodSelect && !paymentMethodSelect.dataset.boundChange) {
+    paymentMethodSelect.dataset.boundChange = "true";
     paymentMethodSelect.addEventListener("change", () => {
       refreshAccountDropdowns(state);
     });
   }
 
-  if (typeSelect) {
+  if (typeSelect && !typeSelect.dataset.boundChange) {
+    typeSelect.dataset.boundChange = "true";
     typeSelect.addEventListener("change", () => {
       setFieldVisibility(typeSelect.value || "EXPENSE");
       refreshAccountDropdowns(state);
     });
   }
 
-  if (form) {
+  if (form && !form.dataset.submitBound) {
+    form.dataset.submitBound = "true";
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const payload = buildTransactionPayloadFromForm();
@@ -355,20 +410,19 @@ export function initializeTransactions(state = { categories: [], accounts: [] })
           if (window.setStatusMessage) {
             window.setStatusMessage("Transaction updated successfully.", "success");
           }
-          if (window.financeAppRefresh) {
-            window.financeAppRefresh();
-          }
         } else {
           await createTransaction(payload);
           if (window.setStatusMessage) {
             window.setStatusMessage("Transaction created successfully.", "success");
           }
-          if (window.financeAppRefresh) {
-            window.financeAppRefresh();
-          }
         }
 
+        await waitForStatusDisplay(5000);
         resetTransactionForm();
+
+        if (window.financeAppRefresh) {
+          window.financeAppRefresh();
+        }
       } catch (error) {
         console.error("Transaction save failed:", error);
         if (window.setStatusMessage) {
@@ -379,14 +433,16 @@ export function initializeTransactions(state = { categories: [], accounts: [] })
   }
 
   const cancelButton = document.getElementById("cancelEditBtn");
-  if (cancelButton) {
+  if (cancelButton && !cancelButton.dataset.boundClick) {
+    cancelButton.dataset.boundClick = "true";
     cancelButton.addEventListener("click", () => {
       resetTransactionForm();
     });
   }
 
   const refreshButton = document.getElementById("refreshTransactionsBtn");
-  if (refreshButton) {
+  if (refreshButton && !refreshButton.dataset.boundClick) {
+    refreshButton.dataset.boundClick = "true";
     refreshButton.addEventListener("click", () => {
       if (window.financeAppRefresh) {
         window.financeAppRefresh();

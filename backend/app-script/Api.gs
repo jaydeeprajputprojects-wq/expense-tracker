@@ -573,17 +573,15 @@ function getRequestAction_(e) {
  * @return {TextOutput} JSON response
  */
 function handleGetMasterData_() {
-  const accounts = getAccounts();
-  const categories = getCategories();
-  const configuration = getConfiguration();
+  const masterData = getMasterDataBundle_();
 
   return createJsonResponse_({
     success: true,
     action: "GET_MASTER_DATA",
     data: {
-      accounts: accounts,
-      categories: categories,
-      configuration: configuration
+      accounts: masterData.accounts,
+      categories: masterData.categories,
+      configuration: masterData.configuration
     },
     message: "Master data fetched successfully"
   });

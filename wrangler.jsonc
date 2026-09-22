@@ -1,7 +1,9 @@
 {
   "name": "expense-tracker",
   "compatibility_date": "2026-09-22",
+  "main": "./src/worker.js",
   "assets": {
-    "directory": "./frontend"
+    "directory": "./frontend",
+    "binding": "ASSETS"
   }
 }

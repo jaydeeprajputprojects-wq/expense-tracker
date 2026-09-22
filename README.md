@@ -13,6 +13,12 @@ The application is designed to keep financial tracking simple while maintaining 
 
 The current version focuses on the core transaction-management functionality.
 
+### Runtime architecture update
+
+The frontend is no longer expected to call Google Apps Script directly from the browser. To avoid CORS failures, the browser calls a Cloudflare Worker route at `/api`, and the Worker forwards the request to the deployed Google Apps Script backend.
+
+This resolves browser CORS issues, keeps the backend logic in Apps Script, and allows the frontend to use the Cloudflare site as the public entry point.
+
 ### Phase 1
 
 * Account master data
@@ -415,7 +421,8 @@ The form dynamically shows and hides fields based on the selected transaction ty
 | Frontend Logic  | Vanilla JavaScript |
 | Icons           | Lucide Icons       |
 | Charts          | Chart.js — Phase 2 |
-| Hosting         | Cloudflare Pages   |
+| Hosting         | Cloudflare Pages / Workers |
+| API Proxy       | Cloudflare Worker proxying Apps Script |
 | API / Backend   | Google Apps Script |
 | Database        | Google Sheets      |
 | HTTP            | Fetch API          |

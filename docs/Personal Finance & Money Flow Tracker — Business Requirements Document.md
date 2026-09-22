@@ -2,8 +2,8 @@
 
 ## Personal Finance & Money Flow Tracker
 
-**Document Version:** 1.0  
-**Status:** Draft / Baseline Requirements  
+**Document Version:** 1.1  
+**Status:** Draft / Updated Requirements  
 **Primary Scope:** Phase 1  
 **Future Enhancements:** Phase 2 and Phase 3  
 
@@ -729,6 +729,51 @@ There is no separate refund workflow.
 
 If a transaction was entered incorrectly or needs to be reversed, the agreed Phase 1 approach is to delete and recreate it where necessary.
 
+## 20.1 User Confirmation UX for Successful Save
+
+After a successful transaction create or update, the system shall present a confirmation message in the application status area before resetting the form.
+
+The message must:
+
+- confirm the user action clearly, such as “Transaction created successfully.” or “Transaction updated successfully.”
+- appear as a prominent but non-blocking banner or toast message
+- use a visual success style with a green accent and clear text contrast
+- animate into view with a brief slide/fade effect when displayed
+- remain visible long enough for the user to read and verify the result
+- remain visible until the user dismisses it manually, instead of disappearing immediately after a quick flash
+
+This confirmation is required because users must be able to visibly confirm that the transaction has been saved before the form clears and before they move to the next action.
+
+## 20.2 Form Reset Timing
+
+The form should not clear immediately after a successful save.
+
+The system should follow this sequence:
+
+1. Validate form.
+2. Submit request to the API.
+3. Receive success response.
+4. Display confirmation banner.
+5. Keep the form visible long enough for user recognition.
+6. Allow the user to dismiss the confirmation message.
+7. Reset the form only after the message has been acknowledged or dismissed.
+8. Refresh the transaction table and summary values.
+
+This requirement improves trust, reduces accidental duplicate entry, and makes the transaction result visible to the user.
+
+## 20.3 Single-Click Save Integrity
+
+The system must ensure that one user click on the Save button creates exactly one transaction record. Duplicate rows must not be produced by repeated listener registration, repeated initialization, or multiple form rebinds during a single save action.
+
+The implementation must prevent the following failure mode:
+
+- a form is initialized multiple times
+- each initialization adds another submit event listener
+- a single user click triggers multiple API calls
+- the same transaction is written several times into the Google Sheet
+
+The requirement is that the frontend behaves as a single-submit action from the user's perspective and the backend must only persist one transaction for each valid click.
+
 ---
 
 # 21. Balance Calculation
@@ -1204,21 +1249,73 @@ The agreed initial technical architecture is:
 
 **Hosting**
 
-- Cloudflare Pages
+- Cloudflare Pages / Cloudflare Workers
+
+**API Proxy / Security Layer**
+
+- Cloudflare Worker acting as a same-origin proxy for `/api`
 
 Conceptual architecture:
 
 > User Browser  
 > ↓  
-> Cloudflare Pages  
+> Cloudflare Page / Worker Site  
 > ↓  
 > JavaScript Application  
+> ↓  
+> /api route on Cloudflare Worker  
 > ↓  
 > Google Apps Script API  
 > ↓  
 > Google Sheets
 
+This architecture was introduced to resolve browser CORS restrictions when the frontend is hosted on a Cloudflare site and the backend is served by Google Apps Script. The browser should not call the Apps Script URL directly from a cross-origin page because the Google Apps Script response does not include the required CORS headers for the browser origin.
+
+The Cloudflare Worker acts as the request bridge and adds the required `Access-Control-Allow-Origin` and related CORS headers before returning the response to the browser.
+
 Google Drive will be used as the underlying storage/location for the Google Sheet, but **Google Drive will not be used as the website hosting platform**.
+
+## 38.1 Same-Origin API Requirement
+
+The frontend must be served from a real HTTP origin, not opened directly via `file://` from the local file system.
+
+The runtime requirement is:
+
+- The browser requests `/api` on the same host as the frontend.
+- The Cloudflare Worker forwards the request to the Google Apps Script endpoint.
+- The frontend must not rely on direct cross-origin calls to `script.google.com`.
+
+This same-origin model is mandatory for the application to work reliably in the browser and avoid CORS rejection errors.
+
+## 38.2 Transaction Notification UX Requirement
+
+The UI must provide a confirmation notification after successful add/update actions.
+
+Requirements:
+
+- success messages should use a green status style
+- the notification must be visible before the form resets
+- the message should animate into place with a simple fade/slide effect
+- users must be able to dismiss the notification manually
+- the status area should not disappear instantly before the user can read it
+- successful actions should be confirmed in the UI before returning the user to a fresh form state
+
+This requirement exists to improve confidence during transaction entry and to reduce accidental duplicate submissions.
+
+## 38.3 Single-Submit Safety Requirement
+
+The system must guarantee that each valid click of the Save button corresponds to exactly one persisted transaction record.
+
+This is required because repeated form initialization or repeated event binding can stack multiple submit handlers on the same form. When that happens, one press of the button can trigger several API requests and insert multiple identical transaction rows into the Google Sheet.
+
+The implementation must therefore:
+
+- bind submit listeners only once per form instance
+- avoid reattaching handlers during refresh or re-init cycles
+- block re-entrant save processing while a save request is already in progress
+- maintain a clear user-visible success state after a valid save
+
+This requirement is part of the functional correctness of the transaction workflow.
 
 ---
 

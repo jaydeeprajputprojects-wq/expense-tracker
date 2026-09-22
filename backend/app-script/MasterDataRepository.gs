@@ -86,6 +86,77 @@ function getCleanMasterData_(sheetName) {
 }
 
 
+const MASTER_DATA_CACHE_KEY = 'EXPENSE_TRACKER_MASTER_DATA';
+const MASTER_DATA_CACHE_TTL_SECONDS = 300;
+
+function getMasterDataCache_() {
+  return CacheService && CacheService.getScriptCache ? CacheService.getScriptCache() : null;
+}
+
+function readMasterDataFromCache_() {
+  const cache = getMasterDataCache_();
+
+  if (!cache) {
+    return null;
+  }
+
+  try {
+    const cachedValue = cache.get(MASTER_DATA_CACHE_KEY);
+
+    if (!cachedValue) {
+      return null;
+    }
+
+    const parsed = JSON.parse(cachedValue);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch (error) {
+    console.warn('Failed to read cached master data:', error && error.message ? error.message : error);
+    return null;
+  }
+}
+
+function writeMasterDataToCache_(payload) {
+  const cache = getMasterDataCache_();
+
+  if (!cache || !payload || typeof payload !== 'object') {
+    return;
+  }
+
+  try {
+    cache.put(MASTER_DATA_CACHE_KEY, JSON.stringify(payload), MASTER_DATA_CACHE_TTL_SECONDS);
+  } catch (error) {
+    console.warn('Failed to cache master data:', error && error.message ? error.message : error);
+  }
+}
+
+function getMasterDataBundle_() {
+  const cached = readMasterDataFromCache_();
+
+  if (cached) {
+    return cached;
+  }
+
+  const payload = {
+    accounts: getAccounts(),
+    categories: getCategories(),
+    configuration: getConfiguration()
+  };
+
+  writeMasterDataToCache_(payload);
+
+  return payload;
+}
+
+function clearMasterDataCache_() {
+  const cache = getMasterDataCache_();
+
+  if (!cache) {
+    return;
+  }
+
+  cache.remove(MASTER_DATA_CACHE_KEY);
+}
+
 /**
  * Read Accounts.
  *
