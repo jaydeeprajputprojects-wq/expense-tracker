@@ -100,8 +100,11 @@
                 </h2>
             </div>
 
-            <div id="appStatus" class="mt-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-                Loading master data...
+            <div id="appStatus" class="mt-4 hidden rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 opacity-0 -translate-y-1 transition-all duration-300 ease-out">
+                <div class="flex items-center justify-between gap-3">
+                    <span id="appStatusText">Loading master data...</span>
+                    <button id="appStatusDismiss" type="button" class="rounded border border-current/20 px-2 py-1 text-xs font-medium hover:bg-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Dismiss notification">Dismiss</button>
+                </div>
             </div>
 
             <form id="transactionForm" class="mt-5 space-y-4">

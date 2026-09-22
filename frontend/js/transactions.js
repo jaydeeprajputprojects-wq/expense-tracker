@@ -343,6 +343,10 @@ function refreshAccountDropdowns(state) {
   });
 }
 
+function waitForStatusDisplay(ms = 5000) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function initializeTransactions(state = { categories: [], accounts: [] }) {
   const categorySelect = document.getElementById("categorySelect");
   const categoryCount = document.getElementById("categoryCount");
@@ -403,20 +407,19 @@ export function initializeTransactions(state = { categories: [], accounts: [] })
           if (window.setStatusMessage) {
             window.setStatusMessage("Transaction updated successfully.", "success");
           }
-          if (window.financeAppRefresh) {
-            window.financeAppRefresh();
-          }
         } else {
           await createTransaction(payload);
           if (window.setStatusMessage) {
             window.setStatusMessage("Transaction created successfully.", "success");
           }
-          if (window.financeAppRefresh) {
-            window.financeAppRefresh();
-          }
         }
 
+        await waitForStatusDisplay(5000);
         resetTransactionForm();
+
+        if (window.financeAppRefresh) {
+          window.financeAppRefresh();
+        }
       } catch (error) {
         console.error("Transaction save failed:", error);
         if (window.setStatusMessage) {
