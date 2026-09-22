@@ -1,0 +1,35 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}"
+  method: POST
+  headers:
+    Content-Type: application/json
+  body:
+    type: text
+    content: |-
+      {
+        "action": "CREATE_TRANSACTION",
+        "data": {
+          "transactionType": "EXPENSE",
+          "transactionDate": "21-09-2026",
+          "amount": 200,
+          "categoryId": "CAT001",
+          "paymentMethod": "GIFT_CARD",
+          "paidFromAccountId": "ACC004",
+          "notes": "Gift card purchase"
+        }
+      }
+response:
+  statusCode: 200
+  statusText: OK
+  body:
+    type: text
+    content: |-
+      {
+        "success": true,
+        "message": "Transaction created successfully",
+        "data": {
+          "transactionId": "TXN-<generated>"
+        }
+      }
+order: 1000

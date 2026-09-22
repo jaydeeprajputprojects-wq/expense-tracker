@@ -276,7 +276,8 @@ const Api = {
 
     return ResponseUtil.success(
       {
-        balances: balances
+        balances: balances,
+        accounts: balances
       },
       'Balances fetched successfully'
     );
@@ -458,7 +459,8 @@ function handleGetBalances_() {
     success: true,
     action: "GET_BALANCES",
     data: {
-      balances: balances
+      balances: balances,
+      accounts: balances
     },
     message: "Balances fetched successfully"
   });

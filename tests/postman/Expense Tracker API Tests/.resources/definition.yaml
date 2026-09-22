@@ -1,0 +1,4 @@
+$kind: collection
+description: Ready-to-import Postman collection for the Google Apps Script expense tracker backend.
+variables:
+  baseUrl: https://script.google.com/macros/s/AKfycbx2fZsDgM3RCFVkSQhM1ai4kr4kyc7AbTfWUP1QWdwZhQwmhdqX_ZG03WDQhsIm5IyC/exec

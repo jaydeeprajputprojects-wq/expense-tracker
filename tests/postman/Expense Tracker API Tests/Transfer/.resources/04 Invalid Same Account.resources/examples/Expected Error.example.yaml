@@ -1,0 +1,34 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}"
+  method: POST
+  headers:
+    Content-Type: application/json
+  body:
+    type: text
+    content: |-
+      {
+        "action": "CREATE_TRANSACTION",
+        "data": {
+          "transactionType": "TRANSFER",
+          "transactionDate": "21-09-2026",
+          "amount": 100,
+          "fromAccountId": "ACC001",
+          "toAccountId": "ACC001",
+          "notes": "same account"
+        }
+      }
+response:
+  statusCode: 200
+  statusText: OK
+  body:
+    type: text
+    content: |-
+      {
+        "success": false,
+        "error": {
+          "code": "INVALID_TRANSFER_ACCOUNT",
+          "message": "From and To accounts must be different."
+        }
+      }
+order: 1000
