@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{baseUrl}}"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "action": "UPDATE_TRANSACTION",
+      "transactionId": "TXN-20260921-EXP-001",
+      "data": {
+        "transactionType": "EXPENSE",
+        "transactionDate": "21-09-2026",
+        "amount": 2200,
+        "categoryId": "CAT001",
+        "paymentMethod": "BANK",
+        "paidFromAccountId": "ACC001",
+        "notes": "Updated groceries"
+      }
+    }
+order: 400
