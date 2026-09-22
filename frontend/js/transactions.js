@@ -380,20 +380,23 @@ export function initializeTransactions(state = { categories: [], accounts: [] })
     categoryCount.textContent = String(Array.isArray(state.categories) ? state.categories.length : 0);
   }
 
-  if (paymentMethodSelect) {
+  if (paymentMethodSelect && !paymentMethodSelect.dataset.boundChange) {
+    paymentMethodSelect.dataset.boundChange = "true";
     paymentMethodSelect.addEventListener("change", () => {
       refreshAccountDropdowns(state);
     });
   }
 
-  if (typeSelect) {
+  if (typeSelect && !typeSelect.dataset.boundChange) {
+    typeSelect.dataset.boundChange = "true";
     typeSelect.addEventListener("change", () => {
       setFieldVisibility(typeSelect.value || "EXPENSE");
       refreshAccountDropdowns(state);
     });
   }
 
-  if (form) {
+  if (form && !form.dataset.submitBound) {
+    form.dataset.submitBound = "true";
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const payload = buildTransactionPayloadFromForm();
@@ -430,14 +433,16 @@ export function initializeTransactions(state = { categories: [], accounts: [] })
   }
 
   const cancelButton = document.getElementById("cancelEditBtn");
-  if (cancelButton) {
+  if (cancelButton && !cancelButton.dataset.boundClick) {
+    cancelButton.dataset.boundClick = "true";
     cancelButton.addEventListener("click", () => {
       resetTransactionForm();
     });
   }
 
   const refreshButton = document.getElementById("refreshTransactionsBtn");
-  if (refreshButton) {
+  if (refreshButton && !refreshButton.dataset.boundClick) {
+    refreshButton.dataset.boundClick = "true";
     refreshButton.addEventListener("click", () => {
       if (window.financeAppRefresh) {
         window.financeAppRefresh();

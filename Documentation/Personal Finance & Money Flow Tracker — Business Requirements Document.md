@@ -761,6 +761,19 @@ The system should follow this sequence:
 
 This requirement improves trust, reduces accidental duplicate entry, and makes the transaction result visible to the user.
 
+## 20.3 Single-Click Save Integrity
+
+The system must ensure that one user click on the Save button creates exactly one transaction record. Duplicate rows must not be produced by repeated listener registration, repeated initialization, or multiple form rebinds during a single save action.
+
+The implementation must prevent the following failure mode:
+
+- a form is initialized multiple times
+- each initialization adds another submit event listener
+- a single user click triggers multiple API calls
+- the same transaction is written several times into the Google Sheet
+
+The requirement is that the frontend behaves as a single-submit action from the user's perspective and the backend must only persist one transaction for each valid click.
+
 ---
 
 # 21. Balance Calculation
@@ -1288,6 +1301,21 @@ Requirements:
 - successful actions should be confirmed in the UI before returning the user to a fresh form state
 
 This requirement exists to improve confidence during transaction entry and to reduce accidental duplicate submissions.
+
+## 38.3 Single-Submit Safety Requirement
+
+The system must guarantee that each valid click of the Save button corresponds to exactly one persisted transaction record.
+
+This is required because repeated form initialization or repeated event binding can stack multiple submit handlers on the same form. When that happens, one press of the button can trigger several API requests and insert multiple identical transaction rows into the Google Sheet.
+
+The implementation must therefore:
+
+- bind submit listeners only once per form instance
+- avoid reattaching handlers during refresh or re-init cycles
+- block re-entrant save processing while a save request is already in progress
+- maintain a clear user-visible success state after a valid save
+
+This requirement is part of the functional correctness of the transaction workflow.
 
 ---
 

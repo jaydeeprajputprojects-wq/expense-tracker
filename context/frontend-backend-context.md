@@ -214,6 +214,16 @@ The frontend now:
 - resets form after successful create/update
 - confirms delete operations before executing them
 
+### 5.5 Single-submit protection requirement
+A single user click on the Save button must produce exactly one transaction record. During the implementation, a duplicate-save bug was discovered where the same form was re-initialized repeatedly and each re-init attached a new submit listener. This caused one click to fire multiple API submissions and insert multiple identical rows into the sheet.
+
+The fix required:
+- guarding form event binding so submit handlers are only attached once
+- preventing repeated module initialization from stacking listeners
+- avoiding duplicate refresh-triggered reinitialization during the same user flow
+
+This is treated as a business requirement, not just a cleanup issue. The system must ensure that the save action is idempotent from the user’s perspective: one click, one record.
+
 ---
 
 ## 6. Runtime Deployment Issues and Resolutions

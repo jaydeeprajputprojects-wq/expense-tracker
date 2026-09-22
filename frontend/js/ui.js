@@ -202,13 +202,21 @@ function renderTransactionTable() {
 }
 
 export async function initializeUI() {
+  if (appState.isLoading) {
+    return;
+  }
+
   console.log("Finance Tracker UI initialized.");
 
   if (window.lucide) {
     window.lucide.createIcons();
   }
 
-  window.financeAppRefresh = () => initializeUI();
+  window.financeAppRefresh = async () => {
+    if (!appState.isLoading) {
+      await initializeUI();
+    }
+  };
 
   appState.isLoading = true;
   updateStatus("Loading master data from Google Apps Script...", "info");
