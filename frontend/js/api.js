@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://script.google.com/macros/s/AKfycbzPuUBPHfZlQADju5aTQ0p1QskxlOhxa7RGVTCEoAYjj4Qmr16oeZhS3XGnrQmmKLfR/exec";
+const API_BASE_URL = "https://script.google.com/macros/s/AKfycbwVJ783UQBEP6UreGyZ3fdANeFlpp0Yq2zr0iSUhIBmdfSpsn7S_hwmGXwH2gdx4wz5/exec";
 
 function buildApiUrl(endpoint = "") {
   if (!endpoint) {
