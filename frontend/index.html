@@ -91,21 +91,73 @@
 
     </section>
 
-    <!-- Application Area -->
-    <section class="bg-white rounded-lg shadow-sm p-6">
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <i data-lucide="layout-dashboard"></i>
+                <h2 class="text-xl font-semibold">
+                    Quick transaction
+                </h2>
+            </div>
 
-        <div class="flex items-center gap-3 mb-4">
-            <i data-lucide="layout-dashboard"></i>
+            <div id="appStatus" class="mt-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+                Loading master data...
+            </div>
 
-            <h2 class="text-xl font-semibold">
-                Finance Dashboard
-            </h2>
+            <form class="mt-5 space-y-4">
+                <div>
+                    <label for="transactionType" class="mb-1 block text-sm font-medium text-gray-700">Transaction type</label>
+                    <select id="transactionType" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none">
+                        <option value="EXPENSE">Expense</option>
+                        <option value="INCOME">Income</option>
+                        <option value="TRANSFER">Transfer</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="accountSelect" class="mb-1 block text-sm font-medium text-gray-700">Account</label>
+                    <select id="accountSelect" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none">
+                        <option value="">Loading accounts...</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="categorySelect" id="categoryLabel" class="mb-1 block text-sm font-medium text-gray-700">Expense category</label>
+                    <select id="categorySelect" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none">
+                        <option value="">Loading categories...</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="amountInput" class="mb-1 block text-sm font-medium text-gray-700">Amount</label>
+                    <input id="amountInput" type="number" min="0.01" step="0.01" placeholder="0.00" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none" />
+                </div>
+            </form>
         </div>
 
-        <p class="text-gray-600">
-            Your finance tracking dashboard will be available here.
-        </p>
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <i data-lucide="database"></i>
+                <h2 class="text-xl font-semibold">
+                    Application state
+                </h2>
+            </div>
 
+            <div class="space-y-3 text-sm text-gray-600">
+                <div class="flex items-center justify-between">
+                    <span>Accounts</span>
+                    <strong id="accountCount" class="text-gray-900">0</strong>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span>Categories</span>
+                    <strong id="categoryCount" class="text-gray-900">0</strong>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span>Configuration entries</span>
+                    <strong id="configCount" class="text-gray-900">0</strong>
+                </div>
+            </div>
+        </div>
     </section>
 
 </main>
