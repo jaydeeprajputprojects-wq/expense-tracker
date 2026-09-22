@@ -494,6 +494,53 @@ function doGet(e) {
 }
 
 /**
+ * Reads a value from either a standard Apps Script parameter map or a raw query string.
+ *
+ * @param {Object} e Apps Script event object
+ * @param {string} key Parameter name
+ * @return {string|null}
+ */
+function getRequestValue_(e, key) {
+  if (!e) {
+    return null;
+  }
+
+  if (e.parameter && e.parameter[key] !== undefined && e.parameter[key] !== null) {
+    return e.parameter[key];
+  }
+
+  if (e.parameters && e.parameters[key] !== undefined && e.parameters[key] !== null) {
+    return e.parameters[key];
+  }
+
+  const rawQuery = typeof e.queryString === 'string' ? e.queryString : '';
+
+  if (!rawQuery) {
+    return null;
+  }
+
+  const pairs = rawQuery.split('&');
+
+  for (let i = 0; i < pairs.length; i++) {
+    const pair = pairs[i];
+
+    if (!pair || pair.indexOf('=') === -1) {
+      continue;
+    }
+
+    const [queryKey, ...valueParts] = pair.split('=');
+    const decodedKey = decodeURIComponent(queryKey || '');
+    const decodedValue = decodeURIComponent(valueParts.join('=') || '');
+
+    if (decodedKey === key) {
+      return decodedValue;
+    }
+  }
+
+  return null;
+}
+
+/**
  * Extracts the action parameter from the request.
  *
  * Example:
@@ -503,11 +550,13 @@ function doGet(e) {
  * @return {string} Request action
  */
 function getRequestAction_(e) {
-  if (!e || !e.parameter) {
+  const action = getRequestValue_(e, 'action');
+
+  if (action === null || action === undefined) {
     return "";
   }
 
-  return String(e.parameter.action || "")
+  return String(action)
     .trim()
     .toUpperCase();
 }
@@ -555,7 +604,7 @@ function handleGetTransactions_() {
 
 function handleGetTransaction_(e) {
   const parameters = e && e.parameter ? e.parameter : {};
-  const transactionId = parameters.transactionId;
+  const transactionId = getRequestValue_(e, 'transactionId') || parameters.transactionId;
 
   if (!transactionId || String(transactionId).trim() === '') {
     return createJsonResponse_({
