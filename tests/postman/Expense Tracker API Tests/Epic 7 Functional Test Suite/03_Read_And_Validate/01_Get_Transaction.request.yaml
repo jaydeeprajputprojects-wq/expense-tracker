@@ -1,9 +1,21 @@
 $kind: http-request
-url: "{{baseUrl}}"
+url: "{{baseUrl}}?action=GET_TRANSACTION&transactionId=TXN-20260923-052500"
 method: GET
 headers:
   Content-Type: application/json
 query:
   action: GET_TRANSACTION
-  transactionId: TXN-20260921-EXP-001
+  transactionId: "TXN-20260923-560736"
+queryParams:
+  - key: action
+    value: GET_TRANSACTION
+    disabled: false
+    description: ""
+  - key: transactionId
+    value: TXN-20260923-052500
+    disabled: false
+    description: ""
+body:
+  type: json
+  content: ""
 order: 300

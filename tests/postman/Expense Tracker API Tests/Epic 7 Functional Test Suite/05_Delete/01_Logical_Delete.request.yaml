@@ -8,6 +8,6 @@ body:
   content: |-
     {
       "action": "DELETE_TRANSACTION",
-      "transactionId": "TXN-20260921-EXP-001"
+      "transactionId": "TXN-20260923-560736"
     }
 order: 500
