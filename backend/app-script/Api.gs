@@ -398,17 +398,42 @@ const Api = {
    */
   handleDeleteTransaction: function(request) {
 
-    if (!request.transactionId && !request.data) {
+    if (!request || typeof request !== 'object') {
+      return ResponseUtil.error(
+        'INVALID_REQUEST',
+        'Request object is required'
+      );
+    }
 
+    const payload = request.data && typeof request.data === 'object' ? request.data : request;
+    const transactionId = request.transactionId !== undefined ? request.transactionId : (payload && payload.transactionId !== undefined ? payload.transactionId : null);
+
+    if (
+      transactionId === undefined ||
+      transactionId === null ||
+      String(transactionId).trim() === ''
+    ) {
       return ResponseUtil.error(
         'INVALID_REQUEST',
         'transactionId is required'
       );
     }
 
-    return ResponseUtil.error(
-      'NOT_IMPLEMENTED',
-      'DELETE_TRANSACTION is not implemented yet'
+    const result = TransactionService.deleteTransaction(transactionId);
+
+    if (!result || !result.success) {
+      return ResponseUtil.error(
+        result && result.code ? result.code : 'SERVER_ERROR',
+        result && result.message ? result.message : 'Unable to delete transaction.'
+      );
+    }
+
+    return ResponseUtil.success(
+      {
+        transactionId: result.transactionId,
+        transaction: result.record
+      },
+      'Transaction deleted successfully'
     );
   }
 

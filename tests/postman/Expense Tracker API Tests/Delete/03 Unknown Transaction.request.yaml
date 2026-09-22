@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "action": "DELETE_TRANSACTION",
+      "transactionId": "TXN-999999"
+    }
+examples: ./.resources/03 Unknown Transaction.resources/examples
+order: 1020

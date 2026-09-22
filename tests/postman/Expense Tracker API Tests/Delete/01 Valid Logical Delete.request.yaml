@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "action": "DELETE_TRANSACTION",
+      "transactionId": "TXN-000001"
+    }
+examples: ./.resources/01 Valid Logical Delete.resources/examples
+order: 1000
