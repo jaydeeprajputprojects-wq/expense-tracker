@@ -228,9 +228,17 @@ const Api = {
    */
   handleGetMasterData: function() {
 
-    return ResponseUtil.error(
-      'NOT_IMPLEMENTED',
-      'GET_MASTER_DATA is not implemented yet'
+    const accounts = getAccounts() || [];
+    const categories = getCategories() || [];
+    const configuration = getConfiguration() || [];
+
+    return ResponseUtil.success(
+      {
+        accounts: accounts,
+        categories: categories,
+        configuration: configuration
+      },
+      'Master data fetched successfully'
     );
   },
 

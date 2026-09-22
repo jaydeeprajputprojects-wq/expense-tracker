@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "action": "DELETE_TRANSACTION",
+      "transactionId": "TXN-20260921-EXP-001"
+    }
+order: 500

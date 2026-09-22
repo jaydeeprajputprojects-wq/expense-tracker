@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}"
+method: GET
+headers:
+  Content-Type: application/json
+query:
+  action: GET_MASTER_DATA
+order: 100
