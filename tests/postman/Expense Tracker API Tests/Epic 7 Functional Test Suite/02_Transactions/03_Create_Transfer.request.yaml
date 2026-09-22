@@ -13,7 +13,7 @@ body:
         "transactionDate": "23-09-2026",
         "amount": 4000,
         "fromAccountId": "ACC001",
-        "toAccountId": "ACC004",
+        "toAccountId": "ACC003",
         "notes": "Savings transfer"
       }
     }
