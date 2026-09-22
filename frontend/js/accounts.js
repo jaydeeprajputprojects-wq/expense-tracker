@@ -1,4 +1,4 @@
-export function populateSelect(selectElement, records, { valueKey, labelKey, placeholder = "Select an option" } = {}) {
+export function populateSelect(selectElement, records, { valueKey, labelKey, placeholder = "Select an option", filterFn } = {}) {
   if (!selectElement) {
     return;
   }
@@ -9,7 +9,8 @@ export function populateSelect(selectElement, records, { valueKey, labelKey, pla
       return false;
     }
 
-    return record.status === undefined || record.status === "ACTIVE";
+    const isActive = record.status === undefined || record.status === "ACTIVE";
+    return isActive && (!filterFn || filterFn(record));
   });
 
   selectElement.innerHTML = "";
