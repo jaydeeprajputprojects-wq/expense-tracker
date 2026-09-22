@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://53ad7c5e-expense-tracker.jaydeeprajputprojects.workers.dev/api";
+const API_BASE_URL = "/api";
 
 function ensureHttpServerForApi() {
   if (typeof window !== "undefined" && window.location && window.location.protocol === "file:") {

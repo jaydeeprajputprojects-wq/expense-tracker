@@ -13,7 +13,7 @@ Primary tech stack:
 - Data source: Google Sheets
 - UI styling: Tailwind CSS CDN
 - Icons: Lucide
-- Deployment model: Google Apps Script Web App + frontend static HTML/JS
+- Deployment model: Cloudflare Worker proxy + Cloudflare Pages/Workers static frontend + Google Apps Script backend
 
 The system is a personal finance tracker for handling:
 - income
@@ -204,7 +204,7 @@ Implemented API wrappers:
 - updateTransaction(transactionId, payload)
 - deleteTransaction(transactionId)
 
-The frontend uses a shared API wrapper around the Google Apps Script web app and handles JSON parsing and standard success/error envelopes.
+The frontend uses a shared API wrapper that targets the Cloudflare Worker proxy at `/api` and forwards requests to the deployed Google Apps Script backend. This avoids browser CORS failures and keeps the frontend calls same-origin.
 
 ### 5.4 Validation and user feedback
 The frontend now:
@@ -216,7 +216,46 @@ The frontend now:
 
 ---
 
-## 6. Important Bugs Found and Root Causes
+## 6. Runtime Deployment Issues and Resolutions
+
+### 6.1 Browser opened via file://
+Opening the frontend directly from a local file, such as `file:///.../frontend/index.html`, causes browser network calls to fail because the page is not running under an HTTP origin. This blocks API access and can trigger generic network errors even when the backend URL is valid.
+
+Resolution:
+- open the app via a local web server, such as `http://localhost:8000`, or from the deployed Cloudflare site
+- do not rely on direct file-open execution for the working frontend
+
+### 6.2 Direct Apps Script call from browser caused CORS failure
+The browser was previously calling the Google Apps Script URL directly. When the app was hosted on Cloudflare Workers, that request was rejected with:
+
+```text
+Access to fetch at 'https://script.google.com/.../exec' from origin 'https://<workers-domain>' has been blocked by CORS policy
+```
+
+This happened because the Google Apps Script response did not include the required `Access-Control-Allow-Origin` headers for the browser origin.
+
+Resolution:
+- keep the backend in Google Apps Script
+- add a Cloudflare Worker proxy for `/api`
+- let the browser call the worker endpoint instead of the script.google.com URL directly
+- return CORS headers from the worker response
+
+### 6.3 Stale Apps Script web app URL
+If the deployed Google Apps Script URL was not updated after redeploying the web app, the frontend would keep pointing to the wrong backend, causing save and fetch errors.
+
+Resolution:
+- redeploy the Apps Script web app
+- copy the new current web app URL
+- update the worker target URL in the Cloudflare Worker configuration.
+
+### 6.4 Current architecture after fix
+- Frontend: static HTML/JS assets served from Cloudflare
+- Browser request: `GET /api?...` or `POST /api`
+- Worker: forwards to Google Apps Script
+- Backend: Apps Script executes action handlers and returns JSON
+- Response: Worker adds CORS headers and sends JSON back to the browser
+
+## 7. Important Bugs Found and Root Causes
 
 ### Bug 1: Unsupported GET action: GET_TRANSACTIONS
 Root cause:
