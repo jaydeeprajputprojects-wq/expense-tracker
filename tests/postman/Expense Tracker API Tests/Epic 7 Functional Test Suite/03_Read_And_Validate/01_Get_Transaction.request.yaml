@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}"
+method: GET
+headers:
+  Content-Type: application/json
+query:
+  action: GET_TRANSACTION
+  transactionId: TXN-20260921-EXP-001
+order: 300
