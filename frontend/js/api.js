@@ -1,10 +1,12 @@
 const API_BASE_URL = "https://script.google.com/macros/s/AKfycbx2fZsDgM3RCFVkSQhM1ai4kr4kyc7AbTfWUP1QWdwZhQwmhdqX_ZG03WDQhsIm5IyC/exec";
 
 function buildApiUrl(endpoint = "") {
-  const normalizedEndpoint = endpoint || "";
-  const queryString = normalizedEndpoint.startsWith("?") ? normalizedEndpoint : `?${normalizedEndpoint}`;
+  if (!endpoint) {
+    return API_BASE_URL;
+  }
 
-  return `${API_BASE_URL}${queryString}`;
+  const normalizedEndpoint = endpoint.startsWith("?") ? endpoint : `?${endpoint}`;
+  return `${API_BASE_URL}${normalizedEndpoint}`;
 }
 
 export async function apiRequest(endpoint = "", options = {}) {
@@ -61,4 +63,50 @@ export async function apiRequest(endpoint = "", options = {}) {
 
 export async function getMasterData() {
   return apiRequest("?action=GET_MASTER_DATA");
+}
+
+export async function getTransactions() {
+  const result = await apiRequest("?action=GET_TRANSACTIONS");
+  return result && typeof result === "object" && Array.isArray(result.transactions) ? result : { transactions: [] };
+}
+
+export async function getTransaction(transactionId) {
+  const result = await apiRequest(`?action=GET_TRANSACTION&transactionId=${encodeURIComponent(transactionId)}`);
+  return result && typeof result === "object" && result.transaction ? result : { transaction: null };
+}
+
+export async function getBalances() {
+  const result = await apiRequest("?action=GET_BALANCES");
+  return result && typeof result === "object" && Array.isArray(result.balances) ? result : { balances: [] };
+}
+
+export async function createTransaction(payload) {
+  return apiRequest("", {
+    method: "POST",
+    body: {
+      action: "CREATE_TRANSACTION",
+      data: payload
+    }
+  });
+}
+
+export async function updateTransaction(transactionId, payload) {
+  return apiRequest("", {
+    method: "POST",
+    body: {
+      action: "UPDATE_TRANSACTION",
+      transactionId,
+      data: payload
+    }
+  });
+}
+
+export async function deleteTransaction(transactionId) {
+  return apiRequest("", {
+    method: "POST",
+    body: {
+      action: "DELETE_TRANSACTION",
+      transactionId
+    }
+  });
 }

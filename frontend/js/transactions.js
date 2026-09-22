@@ -1,4 +1,5 @@
 import { populateSelect } from "./accounts.js";
+import { createTransaction, updateTransaction } from "./api.js";
 
 function getActiveCategories(categories = []) {
   return categories.filter((category) => category && (category.status === undefined || category.status === "ACTIVE"));
@@ -22,27 +23,14 @@ function getAccountTypeForPaymentMethod(paymentMethod) {
   return "";
 }
 
-function setFieldVisibility(type) {
+export function setFieldVisibility(type) {
   const fields = {
-    date: document.getElementById("field-date"),
-    amount: document.getElementById("field-amount"),
-    category: document.getElementById("field-category"),
     paymentMethod: document.getElementById("field-paymentMethod"),
     paidFrom: document.getElementById("field-paidFrom"),
     receivedInto: document.getElementById("field-receivedInto"),
     transferFrom: document.getElementById("field-transferFrom"),
-    transferTo: document.getElementById("field-transferTo"),
-    notes: document.getElementById("field-notes")
+    transferTo: document.getElementById("field-transferTo")
   };
-
-  const hasDate = true;
-  const showCommon = [fields.date, fields.amount, fields.category, fields.notes];
-
-  showCommon.forEach((field) => {
-    if (field) {
-      field.classList.remove("hidden");
-    }
-  });
 
   const isExpense = type === "EXPENSE";
   const isIncome = type === "INCOME";
@@ -67,43 +55,215 @@ function setFieldVisibility(type) {
   if (fields.transferTo) {
     fields.transferTo.classList.toggle("hidden", !isTransfer);
   }
+}
 
-  if (fields.category) {
-    const categoryLabel = document.getElementById("categoryLabel");
-    if (categoryLabel) {
-      categoryLabel.textContent = isExpense ? "Category" : isIncome ? "Category" : "Category";
+export function populateFormWithTransaction(transaction = {}) {
+  const form = document.getElementById("transactionForm");
+  const typeSelect = document.getElementById("transactionType");
+  const dateInput = document.getElementById("transactionDate");
+  const amountInput = document.getElementById("amountInput");
+  const categorySelect = document.getElementById("categorySelect");
+  const paymentMethodSelect = document.getElementById("paymentMethodSelect");
+  const paidFromAccount = document.getElementById("paidFromAccount");
+  const receivedIntoAccount = document.getElementById("receivedIntoAccount");
+  const transferFromAccount = document.getElementById("transferFromAccount");
+  const transferToAccount = document.getElementById("transferToAccount");
+  const notesInput = document.getElementById("notesInput");
+  const submitButton = document.getElementById("submitTransactionBtn");
+  const cancelButton = document.getElementById("cancelEditBtn");
+
+  if (!form) {
+    return;
+  }
+
+  const transactionType = String(transaction.transactionType || "EXPENSE").trim().toUpperCase();
+  form.dataset.mode = transaction.transactionId ? "edit" : "create";
+  form.dataset.transactionId = transaction.transactionId || "";
+
+  if (typeSelect) {
+    typeSelect.value = transactionType;
+  }
+
+  if (dateInput) {
+    const dateValue = transaction.transactionDate || "";
+    dateInput.value = dateValue;
+  }
+
+  if (amountInput) {
+    amountInput.value = transaction.amount ?? "";
+  }
+
+  if (categorySelect) {
+    categorySelect.value = transaction.categoryId || "";
+  }
+
+  if (paymentMethodSelect) {
+    paymentMethodSelect.value = transaction.paymentMethod || "BANK";
+  }
+
+  if (paidFromAccount) {
+    paidFromAccount.value = transaction.paidFromAccountId || "";
+  }
+
+  if (receivedIntoAccount) {
+    receivedIntoAccount.value = transaction.receivedIntoAccountId || "";
+  }
+
+  if (transferFromAccount) {
+    transferFromAccount.value = transaction.fromAccountId || "";
+  }
+
+  if (transferToAccount) {
+    transferToAccount.value = transaction.toAccountId || "";
+  }
+
+  if (notesInput) {
+    notesInput.value = transaction.notes || "";
+  }
+
+  setFieldVisibility(transactionType);
+
+  if (submitButton) {
+    submitButton.textContent = transaction.transactionId ? "Update transaction" : "Save transaction";
+  }
+
+  if (cancelButton) {
+    cancelButton.classList.toggle("hidden", !transaction.transactionId);
+  }
+}
+
+export function resetTransactionForm() {
+  const form = document.getElementById("transactionForm");
+  const typeSelect = document.getElementById("transactionType");
+  const dateInput = document.getElementById("transactionDate");
+  const amountInput = document.getElementById("amountInput");
+  const categorySelect = document.getElementById("categorySelect");
+  const paymentMethodSelect = document.getElementById("paymentMethodSelect");
+  const notesInput = document.getElementById("notesInput");
+  const submitButton = document.getElementById("submitTransactionBtn");
+  const cancelButton = document.getElementById("cancelEditBtn");
+
+  if (form) {
+    form.dataset.mode = "create";
+    form.dataset.transactionId = "";
+  }
+
+  if (typeSelect) {
+    typeSelect.value = "EXPENSE";
+  }
+
+  if (dateInput) {
+    dateInput.value = "";
+  }
+
+  if (amountInput) {
+    amountInput.value = "";
+  }
+
+  if (categorySelect) {
+    categorySelect.value = "";
+  }
+
+  if (paymentMethodSelect) {
+    paymentMethodSelect.value = "BANK";
+  }
+
+  if (notesInput) {
+    notesInput.value = "";
+  }
+
+  if (submitButton) {
+    submitButton.textContent = "Save transaction";
+  }
+
+  if (cancelButton) {
+    cancelButton.classList.add("hidden");
+  }
+
+  setFieldVisibility("EXPENSE");
+}
+
+export function buildTransactionPayloadFromForm() {
+  const form = document.getElementById("transactionForm");
+  const typeSelect = document.getElementById("transactionType");
+  const dateInput = document.getElementById("transactionDate");
+  const amountInput = document.getElementById("amountInput");
+  const categorySelect = document.getElementById("categorySelect");
+  const paymentMethodSelect = document.getElementById("paymentMethodSelect");
+  const paidFromAccount = document.getElementById("paidFromAccount");
+  const receivedIntoAccount = document.getElementById("receivedIntoAccount");
+  const transferFromAccount = document.getElementById("transferFromAccount");
+  const transferToAccount = document.getElementById("transferToAccount");
+  const notesInput = document.getElementById("notesInput");
+
+  const transactionType = typeSelect ? typeSelect.value : "EXPENSE";
+  const payload = {
+    transactionType,
+    transactionDate: dateInput ? dateInput.value : "",
+    amount: Number(amountInput ? amountInput.value : 0),
+    categoryId: categorySelect ? categorySelect.value : "",
+    notes: notesInput ? notesInput.value : ""
+  };
+
+  if (transactionType === "EXPENSE") {
+    payload.paymentMethod = paymentMethodSelect ? paymentMethodSelect.value : "";
+    payload.paidFromAccountId = paidFromAccount ? paidFromAccount.value : "";
+  } else if (transactionType === "INCOME") {
+    payload.receivedIntoAccountId = receivedIntoAccount ? receivedIntoAccount.value : "";
+  } else if (transactionType === "TRANSFER") {
+    payload.fromAccountId = transferFromAccount ? transferFromAccount.value : "";
+    payload.toAccountId = transferToAccount ? transferToAccount.value : "";
+  }
+
+  if (form && form.dataset.transactionId) {
+    payload.transactionId = form.dataset.transactionId;
+  }
+
+  return payload;
+}
+
+function validateTransactionPayload(payload) {
+  if (!payload.transactionDate) {
+    throw new Error("Transaction date is required.");
+  }
+
+  if (!Number.isFinite(Number(payload.amount)) || Number(payload.amount) <= 0) {
+    throw new Error("Amount must be greater than zero.");
+  }
+
+  if (!payload.categoryId) {
+    throw new Error("Category is required.");
+  }
+
+  if (payload.transactionType === "EXPENSE") {
+    if (!payload.paymentMethod) {
+      throw new Error("Payment method is required.");
+    }
+
+    if (!payload.paidFromAccountId) {
+      throw new Error("Paid from account is required.");
     }
   }
 
-  if (fields.paidFrom) {
-    const label = document.getElementById("paidFromLabel");
-    if (label) {
-      label.textContent = "Paid From";
+  if (payload.transactionType === "INCOME") {
+    if (!payload.receivedIntoAccountId) {
+      throw new Error("Receiving account is required.");
     }
   }
 
-  if (fields.receivedInto) {
-    const label = document.getElementById("receivedIntoLabel");
-    if (label) {
-      label.textContent = "Received Into";
+  if (payload.transactionType === "TRANSFER") {
+    if (!payload.fromAccountId) {
+      throw new Error("From account is required.");
+    }
+
+    if (!payload.toAccountId) {
+      throw new Error("To account is required.");
+    }
+
+    if (payload.fromAccountId === payload.toAccountId) {
+      throw new Error("From and To accounts cannot be the same.");
     }
   }
-
-  if (fields.transferFrom) {
-    const label = document.getElementById("transferFromLabel");
-    if (label) {
-      label.textContent = "From";
-    }
-  }
-
-  if (fields.transferTo) {
-    const label = document.getElementById("transferToLabel");
-    if (label) {
-      label.textContent = "To";
-    }
-  }
-
-  return hasDate;
 }
 
 function refreshAccountDropdowns(state) {
@@ -143,6 +303,7 @@ export function initializeTransactions(state = { categories: [], accounts: [] })
   const categoryCount = document.getElementById("categoryCount");
   const typeSelect = document.getElementById("transactionType");
   const paymentMethodSelect = document.getElementById("paymentMethodSelect");
+  const form = document.getElementById("transactionForm");
 
   if (categorySelect) {
     const categories = getActiveCategories(Array.isArray(state.categories) ? state.categories : []);
@@ -174,15 +335,67 @@ export function initializeTransactions(state = { categories: [], accounts: [] })
   }
 
   if (typeSelect) {
-    const syncForm = () => {
+    typeSelect.addEventListener("change", () => {
       setFieldVisibility(typeSelect.value || "EXPENSE");
       refreshAccountDropdowns(state);
-    };
-
-    typeSelect.addEventListener("change", syncForm);
-    syncForm();
+    });
   }
 
+  if (form) {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const payload = buildTransactionPayloadFromForm();
+      const mode = form.dataset.mode || "create";
+
+      try {
+        validateTransactionPayload(payload);
+
+        if (mode === "edit") {
+          await updateTransaction(payload.transactionId, payload);
+          if (window.setStatusMessage) {
+            window.setStatusMessage("Transaction updated successfully.", "success");
+          }
+          if (window.financeAppRefresh) {
+            window.financeAppRefresh();
+          }
+        } else {
+          await createTransaction(payload);
+          if (window.setStatusMessage) {
+            window.setStatusMessage("Transaction created successfully.", "success");
+          }
+          if (window.financeAppRefresh) {
+            window.financeAppRefresh();
+          }
+        }
+
+        resetTransactionForm();
+      } catch (error) {
+        console.error("Transaction save failed:", error);
+        if (window.setStatusMessage) {
+          window.setStatusMessage(error.message || "Unable to save transaction.", "error");
+        }
+      }
+    });
+  }
+
+  const cancelButton = document.getElementById("cancelEditBtn");
+  if (cancelButton) {
+    cancelButton.addEventListener("click", () => {
+      resetTransactionForm();
+    });
+  }
+
+  const refreshButton = document.getElementById("refreshTransactionsBtn");
+  if (refreshButton) {
+    refreshButton.addEventListener("click", () => {
+      if (window.financeAppRefresh) {
+        window.financeAppRefresh();
+      }
+    });
+  }
+
+  resetTransactionForm();
   refreshAccountDropdowns(state);
+  setFieldVisibility("EXPENSE");
   console.log("Transaction module initialized.", state);
 }
